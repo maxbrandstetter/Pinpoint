@@ -3,18 +3,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.max.pinpoint.fragment.HomeFragment"
-    android:background="@color/colorAccent">
+    android:background="@color/colorAccent"
+    android:id="@+id/mapFrame">
 
-    <!-- TODO: Update blank fragment layout -->
-    <ScrollView
+    <com.example.max.pinpoint.TouchImageView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:text="The map will go here and be zoomable and pannable."
-            android:layout_gravity="center"
-            android:gravity="center"/>
-    </ScrollView>
+        android:layout_height="match_parent"
+        android:id="@+id/mapView"
+        android:src="@drawable/room"
+        />
 
 </FrameLayout>

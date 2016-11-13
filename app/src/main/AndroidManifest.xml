@@ -2,6 +2,12 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.example.max.pinpoint">
 
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.INTERNET" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -20,15 +26,15 @@
         <activity
             android:name=".RegisterActivity"
             android:label="Register New Account"
-            android:theme="@style/AppTheme"/>
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".HomeActivity"
             android:label="Home"
-            android:theme="@style/AppTheme"/>
+            android:theme="@style/AppTheme" />
         <activity
             android:name=".AboutUsActivity"
             android:label="@string/title_activity_about_us"
-            android:theme="@style/AppTheme"></activity>
+            android:theme="@style/AppTheme" />
     </application>
 
 </manifest>
