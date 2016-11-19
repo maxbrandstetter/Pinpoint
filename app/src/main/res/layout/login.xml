@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#CCDBDC"
+    android:background="@color/colorAccent"
     android:orientation="vertical"
     android:weightSum="3"
     android:paddingBottom="@dimen/activity_vertical_margin"
@@ -23,9 +23,9 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:id="@+id/textview"
-            android:textColor="#26686D"
+            android:textColor="@color/colorPrimaryDark"
             android:text="Pinpoint"
-            android:textSize="35dp"
+            android:textSize="35sp"
             android:layout_alignParentTop="true"
             android:layout_centerHorizontal="true"
             android:layout_marginTop="30dp"/>
@@ -47,7 +47,7 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentRight="true"
             android:layout_alignParentEnd="true"
-            android:textColor="#26686D"
+            android:textColor="@color/colorPrimaryDark"
             android:text="Username"/>
         <EditText
             android:layout_width="wrap_content"
@@ -71,7 +71,7 @@
             android:layout_alignParentStart="true"
             android:layout_alignParentRight="@+id/usernameField"
             android:layout_alignParentEnd="@+id/usernameField"
-            android:textColor="#26686D"
+            android:textColor="@color/colorPrimaryDark"
             android:text="Password"/>
         <EditText
             android:layout_width="wrap_content"

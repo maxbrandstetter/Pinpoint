@@ -26,6 +26,7 @@ import android.widget.Toast;
 import com.example.max.pinpoint.R;
 import com.example.max.pinpoint.fragment.HomeFragment;
 import com.example.max.pinpoint.fragment.SettingsFragment;
+import com.example.max.pinpoint.fragment.SetupMap1Fragment;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -42,6 +43,7 @@ public class HomeActivity extends AppCompatActivity {
 
     // Tags to associate with fragments
     private static final String TAG_HOME = "home";
+    private static final String TAG_SETUP = "setup";
     private static final String TAG_SETTINGS = "settings";
     public static String CURRENT_TAG = TAG_HOME;
 
@@ -127,7 +129,7 @@ public class HomeActivity extends AppCompatActivity {
             mHandler.post(mPendingRunnable);
         }
 
-        // Dhow or hide the FAB button
+        // Show or hide the FAB button
         toggleFab();
 
         // Close the drawer on click
@@ -144,6 +146,10 @@ public class HomeActivity extends AppCompatActivity {
                 HomeFragment homeFragment = new HomeFragment();
                 return homeFragment;
             case 1:
+                // Map Setup
+                SetupMap1Fragment mapFragment = new SetupMap1Fragment();
+                return mapFragment;
+            case 2:
                 // settings fragment
                 SettingsFragment settingsFragment = new SettingsFragment();
                 return settingsFragment;
@@ -175,8 +181,12 @@ public class HomeActivity extends AppCompatActivity {
                         navItemIndex = 0;
                         CURRENT_TAG = TAG_HOME;
                         break;
-                    case R.id.nav_settings:
+                    case R.id.nav_map_setup:
                         navItemIndex = 1;
+                        CURRENT_TAG = TAG_SETUP;
+                        break;
+                    case R.id.nav_settings:
+                        navItemIndex = 2;
                         CURRENT_TAG = TAG_SETTINGS;
                         break;
                     case R.id.nav_about_us:
@@ -219,7 +229,7 @@ public class HomeActivity extends AppCompatActivity {
         };
 
         // Set the actionbarToggle to drawer layout
-        drawer.setDrawerListener(actionBarDrawerToggle);
+        drawer.addDrawerListener(actionBarDrawerToggle);
 
         // Call sync state to trigger menu icon
         actionBarDrawerToggle.syncState();
