@@ -34,15 +34,10 @@
 
         </LinearLayout>
 
-        <TextView
+        <ListView
+            android:id="@+id/devicesList"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_alignParentTop="true"
-            android:layout_alignParentLeft="true"
-            android:text="@string/setup_1"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Large"
-            android:textColor="@color/colorPrimaryDark"
-            android:scrollbars="vertical"
             android:layout_above="@id/buttonLayout"/>
 
     </RelativeLayout>
