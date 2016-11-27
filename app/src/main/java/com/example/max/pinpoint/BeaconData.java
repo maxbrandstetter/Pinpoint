@@ -11,12 +11,12 @@ import android.os.Parcelable;
 public class BeaconData implements Parcelable {
 
     private ScanResult result;
-    private String name;
+    private boolean selected;
 
     // Constructor
-    public BeaconData(ScanResult result, String name){
+    public BeaconData(ScanResult result){
         this.result = result;
-        this.name = name;
+        this.selected = false;
     }
 
     // Getter and setter methods
@@ -24,22 +24,22 @@ public class BeaconData implements Parcelable {
         return result;
     }
 
-    public String getName() {
-        return name;
+    public boolean isSelected() {
+        return selected;
     }
 
     public void setResult(ScanResult result) {
         this.result = result;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setSelected(boolean selected) {
+        this.selected = selected;
     }
 
     // Parcelling part
     public BeaconData(Parcel in){
         this.result = in.readParcelable(ScanResult.class.getClassLoader());
-        this.name = in.readString();
+        this.selected = (in.readInt() == 0) ? false : true;
     }
 
     @Override
@@ -50,7 +50,7 @@ public class BeaconData implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeParcelable(this.result, flags);
-        dest.writeString(this.name);
+        dest.writeInt(this.selected ? 1 : 0);
     }
     public static final Parcelable.Creator CREATOR = new Parcelable.Creator() {
         public BeaconData createFromParcel(Parcel in) {

@@ -54,6 +54,7 @@ import com.accent_systems.ibks_sdk.scanner.ASResultParser;
 import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
 import com.accent_systems.ibks_sdk.utils.ASUtils;
 import com.accent_systems.ibks_sdk.utils.AuthorizedServiceTask;
+import com.example.max.pinpoint.BeaconData;
 import com.google.android.gms.common.AccountPicker;
 import com.google.sample.libproximitybeacon.ProximityBeacon;
 import com.google.sample.libproximitybeacon.ProximityBeaconImpl;
@@ -68,6 +69,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import com.example.max.pinpoint.R;
 
@@ -84,12 +86,15 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
     private OnFragmentInteractionListener mListener;
 
     public static final int REQUEST_CODE_PICK_ACCOUNT = 1000;
-    public static final int SCOPE_USERLOCATION    =  0;
-    public static final int SCOPE_CLOUDPLATFORM   =  1;
+    public static final int SCOPE_USERLOCATION = 0;
+    public static final int SCOPE_CLOUDPLATFORM = 1;
+    public static final int MAX_WALLS = 4;
 
     private List<String> scannedDevicesList;
     private ArrayAdapter<String> adapter;
+    private List<BeaconData> activeBeacons = new ArrayList<BeaconData>();
 
+    // Used to store characteristics when reading/writing
     BluetoothGattCharacteristic myCharRead;
     BluetoothGattCharacteristic myCharWrite;
 
@@ -99,6 +104,8 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
     public static ProximityBeacon client;
     SharedPreferences getPrefs;
     public static Activity actv;
+    public int numBeacons  = 0;
+    public int mPosition;
 
     static ProgressDialog connDialog;
     private static String TAG = "SetupMap1Fragment";
@@ -351,6 +358,8 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
         devicesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                mPosition = position;
+
                 //Stop the scan
                 Log.i(TAG, "SCAN STOPPED");
                 ASBleScanner.stopScan();
@@ -364,6 +373,70 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
                 Log.i(TAG, "CONNECTION STARTED TO DEVICE "+address);
                 Log.i(TAG,"*************************************************");
 
+                // Check that the list of active beacons isn't empty
+                if (!activeBeacons.isEmpty())
+                {
+                    for (BeaconData beacon : activeBeacons)
+                    {
+                        // Check that the addresses are equal
+                        if (Objects.equals(address, beacon.getResult().getDevice().getAddress()))
+                        {
+                            // Set to active if inactive, inactive if active
+                            if (beacon.isSelected())
+                            {
+                                beacon.setSelected(false);
+                                --numBeacons;
+                                String temp = Integer.toString(numBeacons);
+                                Log.i(TAG, temp);
+
+                                // Remove the highlighting on the list view item
+
+
+                                // Make the continue button invisible if it is active
+                                Button continueButton = (Button) getView().findViewById(R.id.continueButton);
+                                if (continueButton.getVisibility() == View.VISIBLE)
+                                {
+                                    continueButton.setVisibility(View.INVISIBLE);
+                                }
+                            }
+                            else if (!beacon.isSelected())
+                            {
+                                // If the max required beacons is already reached, alert the user and do nothing
+                                if (numBeacons == MAX_WALLS)
+                                {
+                                    AlertDialog alertDialog = new AlertDialog.Builder(actv).create();
+                                    alertDialog.setTitle("Alert");
+                                    alertDialog.setMessage("The maximum number of beacons was reached.\nPlease remove an active beacon before continuing");
+                                    alertDialog.setButton(AlertDialog.BUTTON_NEUTRAL, "OK",
+                                            new DialogInterface.OnClickListener() {
+                                                public void onClick(DialogInterface dialog, int which) {
+                                                    dialog.dismiss();
+                                                }
+                                            });
+                                    alertDialog.show();
+                                    return;
+                                }
+                                // Otherwise, increment
+                                else
+                                {
+                                    beacon.setSelected(true);
+                                    ++numBeacons;
+                                    String temp = Integer.toString(numBeacons);
+                                    Log.i(TAG, temp);
+
+                                    // Allow navigation to the next step if the number of required beacons is reached
+                                    if (numBeacons == MAX_WALLS)
+                                    {
+                                        Button continueButton = (Button) getView().findViewById(R.id.continueButton);
+                                        continueButton.setVisibility(View.VISIBLE);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /* Shows data based on device configuration
                 BluetoothAdapter mBluetoothAdapter = ASBleScanner.getmBluetoothAdapter();
                 if(mBluetoothAdapter != null) {
                     ASConDevice mcondevice;
@@ -381,6 +454,7 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
                 } else{
                     Log.i(TAG,"BLE not enabled/supported!");
                 }
+                */
             }
         });
     }
@@ -425,25 +499,27 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
         String advertisingString = ASResultParser.byteArrayToHex(result.getScanRecord().getBytes());
 
         String logstr = result.getDevice().getAddress()+" / RSSI: "+result.getRssi()+" / Adv packet: "+advertisingString;
-        //Check if scanned device is already in the list by mac address
+        // Check if scanned device is already in the list by mac address
         boolean contains = false;
         for(int i=0; i<scannedDevicesList.size(); i++){
             if(scannedDevicesList.get(i).contains(result.getDevice().getAddress())){
-                //Device already added
+                // Device already added
                 contains = true;
-                //Replace the device with updated values in that position
+                // Replace the device with updated values in that position
                 scannedDevicesList.set(i, result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
                 break;
             }
         }
 
         if(!contains){
-            //Scanned device not found in the list. NEW => add to list
+            // Scanned device not found in the list. NEW => add to list
             scannedDevicesList.add(result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
+            // Devices are only added to the activeBeacons list once
+            activeBeacons.add(new BeaconData(result));
         }
 
-        //After modify the list, notify the adapter that changes have been made so it updates the UI.
-        //UI changes must be done in the main thread
+        // After modify the list, notify the adapter that changes have been made so it updates the UI.
+        // UI changes must be done in the main thread
         if (isAdded())
         {
             getActivity().runOnUiThread(new Runnable() {
