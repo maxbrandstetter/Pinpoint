@@ -1,15 +1,20 @@
 package com.example.max.pinpoint.fragment;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.example.max.pinpoint.BackPressObserver;
+import com.example.max.pinpoint.BeaconData;
 import com.example.max.pinpoint.R;
 
 /**
@@ -20,16 +25,7 @@ import com.example.max.pinpoint.R;
  * Use the {@link SetupMap2Fragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SetupMap2Fragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
-
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
-
+public class SetupMap2Fragment extends Fragment implements BackPressObserver {
     private OnFragmentInteractionListener mListener;
 
     public SetupMap2Fragment() {
@@ -47,20 +43,19 @@ public class SetupMap2Fragment extends Fragment {
     // TODO: Rename and change types and number of parameters
     public static SetupMap2Fragment newInstance(String param1, String param2) {
         SetupMap2Fragment fragment = new SetupMap2Fragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
         return fragment;
+    }
+
+    // BackPressObserver override
+    @Override
+    public boolean isReadyToInterceptBackPress()
+    {
+        return true;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -69,9 +64,27 @@ public class SetupMap2Fragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_setup_map2, container, false);
 
+        // Gets selected beacons
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+            for(int i = 0; i < 4; ++i) {
+                BeaconData beacon = bundle.getParcelable("beacon" + Integer.toString(i + 1));
+            }
+        }
+
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                new AlertDialog.Builder(getActivity())
+                        .setMessage("Going back now will remove current progress.\n Continue?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // User clicked OK button
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
+
                 Fragment frag = new SetupMap1Fragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);

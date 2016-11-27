@@ -3,6 +3,7 @@ package com.example.max.pinpoint;
 /**
  * Created by Max on 10/23/2016.
  */
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.os.Handler;
@@ -14,6 +15,7 @@ import android.support.v4.app.FragmentTransaction;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -23,10 +25,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
 import com.example.max.pinpoint.R;
 import com.example.max.pinpoint.fragment.HomeFragment;
 import com.example.max.pinpoint.fragment.SettingsFragment;
-import com.example.max.pinpoint.fragment.SetupMap1Fragment;
+import com.example.max.pinpoint.fragment.SetupStartFragment;
 
 public class HomeActivity extends AppCompatActivity {
 
@@ -73,7 +76,7 @@ public class HomeActivity extends AppCompatActivity {
         // Load toolbar titles from string.xml
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
 
-        // CHANGE LATER
+        // TODO: CHANGE LATER
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -103,9 +106,6 @@ public class HomeActivity extends AppCompatActivity {
         // If user selects the current menu again, do nothing
         if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
             drawer.closeDrawers();
-
-            // Show or hide the FAB button
-            toggleFab();
             return;
         }
 
@@ -129,9 +129,6 @@ public class HomeActivity extends AppCompatActivity {
             mHandler.post(mPendingRunnable);
         }
 
-        // Show or hide the FAB button
-        toggleFab();
-
         // Close the drawer on click
         drawer.closeDrawers();
 
@@ -147,7 +144,7 @@ public class HomeActivity extends AppCompatActivity {
                 return homeFragment;
             case 1:
                 // Map Setup
-                SetupMap1Fragment mapFragment = new SetupMap1Fragment();
+                SetupStartFragment mapFragment = new SetupStartFragment();
                 return mapFragment;
             case 2:
                 // settings fragment
@@ -176,7 +173,7 @@ public class HomeActivity extends AppCompatActivity {
 
                 // Check to see which item was clicked and perform appropriate action
                 switch (menuItem.getItemId()) {
-                    // Replace the main content with ContentFragment, which is our Inbox View;
+                    // Replace the main content with ContentFragment;
                     case R.id.nav_home:
                         navItemIndex = 0;
                         CURRENT_TAG = TAG_HOME;
@@ -240,6 +237,33 @@ public class HomeActivity extends AppCompatActivity {
         if (drawer.isDrawerOpen(GravityCompat.START)) {
             drawer.closeDrawers();
             return;
+        }
+
+        for (Fragment fragment : getSupportFragmentManager().getFragments()) {
+            if (fragment instanceof BackPressObserver) {
+                BackPressObserver observer = (BackPressObserver) fragment;
+                if (observer.isReadyToInterceptBackPress()) {
+                    new AlertDialog.Builder(this)
+                            .setMessage("Going back now will remove current progress.\nContinue?")
+                            .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                                public void onClick(DialogInterface dialog, int id) {
+                                    // User clicked OK button
+                                    // Stop the scanner
+                                    ASBleScanner.stopScan();
+                                    // Check if the user is on another menu (not Home)
+                                    if (navItemIndex != 0) {
+                                        navItemIndex = 0;
+                                        CURRENT_TAG = TAG_HOME;
+                                        loadHomeFragment();
+                                        return;
+                                    }
+                                }
+                            })
+                            .setNegativeButton("No", null)
+                            .show();
+                    return;
+                }
+            }
         }
 
         // This code loads the Home fragment when the back key is pressed

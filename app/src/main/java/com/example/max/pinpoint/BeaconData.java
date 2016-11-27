@@ -19,6 +19,9 @@ public class BeaconData implements Parcelable {
         this.selected = false;
     }
 
+    // Empty constructor
+    public BeaconData(){}
+
     // Getter and setter methods
     public ScanResult getResult() {
         return result;

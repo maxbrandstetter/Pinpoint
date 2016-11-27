@@ -1,8 +1,10 @@
 package com.example.max.pinpoint.fragment;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
 import android.view.LayoutInflater;
@@ -54,6 +56,7 @@ import com.accent_systems.ibks_sdk.scanner.ASResultParser;
 import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
 import com.accent_systems.ibks_sdk.utils.ASUtils;
 import com.accent_systems.ibks_sdk.utils.AuthorizedServiceTask;
+import com.example.max.pinpoint.BackPressObserver;
 import com.example.max.pinpoint.BeaconData;
 import com.google.android.gms.common.AccountPicker;
 import com.google.sample.libproximitybeacon.ProximityBeacon;
@@ -81,7 +84,7 @@ import com.example.max.pinpoint.R;
  * Use the {@link SetupMap1Fragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SetupMap1Fragment extends Fragment implements ASScannerCallback, ASConDeviceCallback, ASEDSTCallback, ASiBeaconCallback, ASGlobalCallback {
+public class SetupMap1Fragment extends Fragment implements BackPressObserver, ASScannerCallback, ASConDeviceCallback, ASEDSTCallback, ASiBeaconCallback, ASGlobalCallback {
 
     private OnFragmentInteractionListener mListener;
 
@@ -93,6 +96,7 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
     private List<String> scannedDevicesList;
     private ArrayAdapter<String> adapter;
     private List<BeaconData> activeBeacons = new ArrayList<BeaconData>();
+    private List<BeaconData> chosenBeacons = new ArrayList<BeaconData>();
 
     // Used to store characteristics when reading/writing
     BluetoothGattCharacteristic myCharRead;
@@ -126,6 +130,13 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
     public static SetupMap1Fragment newInstance(String param1, String param2) {
         SetupMap1Fragment fragment = new SetupMap1Fragment();
         return fragment;
+    }
+
+    // BackPressObserver override
+    @Override
+    public boolean isReadyToInterceptBackPress()
+    {
+        return true;
     }
 
     @Override
@@ -183,7 +194,11 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Fragment frag = new HomeFragment();
+                // Stop the scanner
+                ASBleScanner.stopScan();
+
+                // Go back to the start page
+                Fragment frag = new SetupStartFragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
                 fragTransaction.replace(R.id.frame, frag);
@@ -194,9 +209,34 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
         Button continueBtn = (Button) rootView.findViewById(R.id.continueButton);
         continueBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+                // Stop the scanner for now
+                ASBleScanner.stopScan();
+
+                // Get ONLY the selected beacons
+                for (BeaconData beacon : activeBeacons) {
+                    if (beacon.isSelected())
+                    {
+                        chosenBeacons.add(beacon);
+                    }
+                }
+
+                // Create new fragment
+                SetupMap2Fragment mapFragment = new SetupMap2Fragment();
+
+                // Move to the next page
                 Fragment frag = new SetupMap2Fragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
+
+                // Create an intent to share the selected beacons with the next activity
+                Bundle args = new Bundle();
+                // Add each active beacon to the activity
+                for (int i = 0; i < MAX_WALLS; ++i)
+                {
+                    args.putParcelable("beacon" + Integer.toString(i + 1), chosenBeacons.get(i));
+                }
+                mapFragment.setArguments(args);
+
                 fragTransaction.replace(R.id.frame, frag);
                 fragTransaction.commitAllowingStateLoss();
             }
@@ -390,7 +430,7 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
                                 Log.i(TAG, temp);
 
                                 // Remove the highlighting on the list view item
-
+                                parent.getChildAt(position).setBackgroundColor(Color.parseColor("#CCDBDC"));
 
                                 // Make the continue button invisible if it is active
                                 Button continueButton = (Button) getView().findViewById(R.id.continueButton);
@@ -424,6 +464,9 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
                                     String temp = Integer.toString(numBeacons);
                                     Log.i(TAG, temp);
 
+                                    // Set the highlighting on the list view item
+                                    parent.getChildAt(position).setBackgroundColor(Color.parseColor("#80CED7"));
+
                                     // Allow navigation to the next step if the number of required beacons is reached
                                     if (numBeacons == MAX_WALLS)
                                     {
@@ -435,6 +478,8 @@ public class SetupMap1Fragment extends Fragment implements ASScannerCallback, AS
                         }
                     }
                 }
+
+                ASBleScanner.startScan();
 
                 /* Shows data based on device configuration
                 BluetoothAdapter mBluetoothAdapter = ASBleScanner.getmBluetoothAdapter();
