@@ -76,6 +76,8 @@ import java.util.Objects;
 
 import com.example.max.pinpoint.R;
 
+import static android.os.Debug.waitForDebugger;
+
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
@@ -194,15 +196,25 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // Stop the scanner
-                ASBleScanner.stopScan();
+                // TODO: Stop the scanner, throws null reference sometimes
+                // ASBleScanner.stopScan();
 
-                // Go back to the start page
-                Fragment frag = new SetupStartFragment();
-                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
-                fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
-                fragTransaction.replace(R.id.frame, frag);
-                fragTransaction.commitAllowingStateLoss();
+                // Go back
+                new AlertDialog.Builder(getActivity())
+                        .setMessage("Going back now will remove current progress.\nContinue?")
+                        .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int id) {
+                                // User clicked OK button
+                                // Go Back
+                                Fragment frag = new SetupStartFragment();
+                                FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+                                fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
+                                fragTransaction.replace(R.id.frame, frag);
+                                fragTransaction.commitAllowingStateLoss();
+                            }
+                        })
+                        .setNegativeButton("No", null)
+                        .show();
             }
         });
 
@@ -216,26 +228,27 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                 for (BeaconData beacon : activeBeacons) {
                     if (beacon.isSelected())
                     {
+                        // TODO: Fix bug; beacons store in incorrect order
                         chosenBeacons.add(beacon);
                     }
                 }
 
                 // Create new fragment
-                SetupMap2Fragment mapFragment = new SetupMap2Fragment();
+                //SetupMap2Fragment mapFragment = new SetupMap2Fragment();
 
                 // Move to the next page
                 Fragment frag = new SetupMap2Fragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
 
-                // Create an intent to share the selected beacons with the next activity
+                // Create a bundle to share the selected beacons with the next activity
                 Bundle args = new Bundle();
                 // Add each active beacon to the activity
                 for (int i = 0; i < MAX_WALLS; ++i)
                 {
                     args.putParcelable("beacon" + Integer.toString(i + 1), chosenBeacons.get(i));
                 }
-                mapFragment.setArguments(args);
+                frag.setArguments(args);
 
                 fragTransaction.replace(R.id.frame, frag);
                 fragTransaction.commitAllowingStateLoss();
@@ -544,6 +557,7 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
         String advertisingString = ASResultParser.byteArrayToHex(result.getScanRecord().getBytes());
 
         String logstr = result.getDevice().getAddress()+" / RSSI: "+result.getRssi()+" / Adv packet: "+advertisingString;
+
         // Check if scanned device is already in the list by mac address
         boolean contains = false;
         for(int i=0; i<scannedDevicesList.size(); i++){

@@ -25,9 +25,10 @@
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment!</string>
     <string name="title_activity_about_us">About Us</string>
-    <string name="setup_1">Please select the 4 beacons you want to use.\n\nNote: Smaller RSSI values correspond to closer beacons.</string>
-    <string name="setup_2">This is the second step in the map generation process.</string>
+    <string name="setup_1">Please select the 4 beacons you want to use.\n\nKeep track of the names of your beacons! You will be setting them up in a specific order later on.\n\nNote: Smaller RSSI values correspond to closer beacons.</string>
+    <string name="setup_2">Move clockwise around the room and place one beacon in the center of each wall, in the order you selected them.\n\nThen, stand at the corner between the 1st and 2nd beacon and press the button; move clockwise and do this for every corner.\n\nLater on, the order will be displayed and the instructions will change with each button press.</string>
     <string name="setup_3">This is the last step in the map generation process.</string>
-    <string name="map_finished">The map has finished generating! Access the map by pressing the \"Continue\" button below, or navigating to the home page through the menu.</string>
+    <string name="map_finished">The map has finished generating! Access the map by pressing the \"Continue\" button below.</string>
     <string name="map_start1">Welcome to the Pinpoint Setup Wizard! When you press \"Continue\", you will be taken through the process to setup a Pinpoint map.\n\nBefore moving on, make sure that you have at least 4 Accent Systems iBKS beacons configured. No special configuration is required, just followed the instructions that are provided.\n\nWARNING: This system is built on the iBKS SDK; using beacons other than those by Accent Systems may result in errors.</string>
+    <string name="map_placement"></string>
 </resources>

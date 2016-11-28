@@ -106,6 +106,7 @@ public class HomeActivity extends AppCompatActivity {
         // If user selects the current menu again, do nothing
         if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
             drawer.closeDrawers();
+            toggleFab();
             return;
         }
 
@@ -128,6 +129,8 @@ public class HomeActivity extends AppCompatActivity {
         if (mPendingRunnable != null) {
             mHandler.post(mPendingRunnable);
         }
+
+        toggleFab();
 
         // Close the drawer on click
         drawer.closeDrawers();
@@ -310,9 +313,9 @@ public class HomeActivity extends AppCompatActivity {
 
     // Show or hide the FAB
     private void toggleFab() {
-        if (navItemIndex == 0)
+        /*if (navItemIndex == 0)
             fab.show();
-        else
+        else*/
             fab.hide();
     }
 }

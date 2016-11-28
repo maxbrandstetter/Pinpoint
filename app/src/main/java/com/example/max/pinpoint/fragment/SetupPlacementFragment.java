@@ -17,12 +17,12 @@ import com.example.max.pinpoint.R;
 /**
  * A simple {@link Fragment} subclass.
  * Activities that contain this fragment must implement the
- * {@link SetupMap3Fragment.OnFragmentInteractionListener} interface
+ * {@link SetupPlacementFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
- * Use the {@link SetupMap3Fragment#newInstance} factory method to
+ * Use the {@link SetupPlacementFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class SetupMap3Fragment extends Fragment {
+public class SetupPlacementFragment extends Fragment {
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
     private static final String ARG_PARAM1 = "param1";
@@ -34,7 +34,7 @@ public class SetupMap3Fragment extends Fragment {
 
     private OnFragmentInteractionListener mListener;
 
-    public SetupMap3Fragment() {
+    public SetupPlacementFragment() {
         // Required empty public constructor
     }
 
@@ -44,11 +44,11 @@ public class SetupMap3Fragment extends Fragment {
      *
      * @param param1 Parameter 1.
      * @param param2 Parameter 2.
-     * @return A new instance of fragment SetupMap3Fragment.
+     * @return A new instance of fragment SetupPlacementFragment.
      */
     // TODO: Rename and change types and number of parameters
-    public static SetupMap3Fragment newInstance(String param1, String param2) {
-        SetupMap3Fragment fragment = new SetupMap3Fragment();
+    public static SetupPlacementFragment newInstance(String param1, String param2) {
+        SetupPlacementFragment fragment = new SetupPlacementFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -69,17 +69,18 @@ public class SetupMap3Fragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        View rootView = inflater.inflate(R.layout.fragment_setup_map3, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_setup_start, container, false);
 
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 new AlertDialog.Builder(getActivity())
-                        .setMessage("Going back now will remove current progress.\nContinue?")
+                        .setMessage("Going back now will remove current progress.\n Continue?")
                         .setPositiveButton("Yes", new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int id) {
                                 // User clicked OK button
-                                Fragment frag = new SetupMap2Fragment();
+                                // Go back
+                                Fragment frag = new SetupMap1Fragment();
                                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
                                 fragTransaction.replace(R.id.frame, frag);
@@ -94,7 +95,7 @@ public class SetupMap3Fragment extends Fragment {
         Button continueBtn = (Button) rootView.findViewById(R.id.continueButton);
         continueBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                Fragment frag = new MapFinishedFragment();
+                Fragment frag = new SetupMap2Fragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
                 fragTransaction.replace(R.id.frame, frag);
@@ -112,7 +113,6 @@ public class SetupMap3Fragment extends Fragment {
         }
     }
 
-    /*
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
@@ -123,7 +123,6 @@ public class SetupMap3Fragment extends Fragment {
                     + " must implement OnFragmentInteractionListener");
         }
     }
-    */
 
     @Override
     public void onDetach() {

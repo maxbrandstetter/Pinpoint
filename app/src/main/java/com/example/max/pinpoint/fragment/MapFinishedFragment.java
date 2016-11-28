@@ -30,6 +30,9 @@ public class MapFinishedFragment extends Fragment {
     private String mParam1;
     private String mParam2;
 
+    private double length;
+    private double width;
+
     private OnFragmentInteractionListener mListener;
 
     public MapFinishedFragment() {
@@ -68,6 +71,13 @@ public class MapFinishedFragment extends Fragment {
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_map_finished, container, false);
+
+        // Gets selected beacons
+        Bundle bundle = this.getArguments();
+        if (bundle != null) {
+            length = bundle.getDouble("length");
+            width = bundle.getDouble("width");
+        }
 
         Button continueBtn = (Button) rootView.findViewById(R.id.continueButton);
         continueBtn.setOnClickListener(new View.OnClickListener() {
