@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -92,6 +93,11 @@ public class MapFinishedFragment extends Fragment {
         if (bundle != null) {
             length = bundle.getDouble("length");
             width = bundle.getDouble("width");
+
+            new AlertDialog.Builder(getActivity())
+                    .setMessage("Length: " + Double.toString(length) + " Width: " + Double.toString(width))
+                    .setPositiveButton("Ok", null)
+                    .show();
         }
 
         generateMap();
@@ -120,8 +126,8 @@ public class MapFinishedFragment extends Fragment {
         Paint myRectPaint = new Paint();
         float x1 = 0;
         float y1 = 0;
-        float x2 = (float) length * 1000;
-        float y2 = (float) width * 1000;
+        float x2 = (float) length * 100;
+        float y2 = (float) width * 100;
 
         // Create a new image bitmap and attach a brand new canvas to it
         Bitmap tempBitmap = Bitmap.createBitmap((int)(x2), (int)(y2), Bitmap.Config.ARGB_8888);
