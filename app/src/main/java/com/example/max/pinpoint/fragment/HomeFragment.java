@@ -1,6 +1,8 @@
 package com.example.max.pinpoint.fragment;
 
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.PointF;
 import android.graphics.Rect;
@@ -15,9 +17,14 @@ import android.view.ViewGroup;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.lang.Math;
 
 import com.example.max.pinpoint.R;
+import com.example.max.pinpoint.TouchImageView;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -60,7 +67,14 @@ public class HomeFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_home, container, false);
+        View rootView = inflater.inflate(R.layout.fragment_home, container, false);
+
+        if (this.getArguments() != null) {
+            Bundle bundle = this.getArguments();
+            loadImageFromStorage(bundle.getString("filepath"), rootView);
+        }
+
+        return rootView;
     }
 
     // TODO: Rename method, update argument and hook method into UI event
@@ -68,6 +82,21 @@ public class HomeFragment extends Fragment {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
         }
+    }
+
+    private void loadImageFromStorage(String path, View v)
+    {
+        try {
+            File f = new File(path, "map.jpg");
+            Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+            TouchImageView img = (TouchImageView) v.findViewById(R.id.mapView);
+            img.setImageBitmap(b);
+        }
+        catch (FileNotFoundException e)
+        {
+            e.printStackTrace();
+        }
+
     }
 
     /*

@@ -231,7 +231,7 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                             }
                         }
                     }
-                }, 2000);
+                }, 5000);
 
             }
         });

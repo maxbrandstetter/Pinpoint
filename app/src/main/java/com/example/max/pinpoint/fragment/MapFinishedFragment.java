@@ -1,6 +1,14 @@
 package com.example.max.pinpoint.fragment;
 
 import android.content.Context;
+import android.content.ContextWrapper;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.PorterDuff;
+import android.graphics.RectF;
+import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -9,8 +17,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import com.example.max.pinpoint.R;
+
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -32,6 +46,7 @@ public class MapFinishedFragment extends Fragment {
 
     private double length;
     private double width;
+    private String filepath;
 
     private OnFragmentInteractionListener mListener;
 
@@ -79,18 +94,74 @@ public class MapFinishedFragment extends Fragment {
             width = bundle.getDouble("width");
         }
 
+        generateMap();
+
         Button continueBtn = (Button) rootView.findViewById(R.id.continueButton);
         continueBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 Fragment frag = new HomeFragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
                 fragTransaction.setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out);
+
+                // Pass the bundle to the main activity
+                Bundle args = new Bundle();
+                args.putString("filepath", filepath);
+                frag.setArguments(args);
+
                 fragTransaction.replace(R.id.frame, frag);
                 fragTransaction.commitAllowingStateLoss();
             }
         });
 
         return rootView;
+    }
+
+    public void generateMap() {
+        Paint myRectPaint = new Paint();
+        float x1 = 0;
+        float y1 = 0;
+        float x2 = (float) length * 1000;
+        float y2 = (float) width * 1000;
+
+        // Create a new image bitmap and attach a brand new canvas to it
+        Bitmap tempBitmap = Bitmap.createBitmap((int)(x2), (int)(y2), Bitmap.Config.ARGB_8888);
+        Canvas tempCanvas = new Canvas(tempBitmap);
+        myRectPaint.setColor(Color.parseColor("#26686D"));
+        myRectPaint.setStyle(Paint.Style.STROKE);
+        myRectPaint.setStrokeWidth(10);
+
+        tempCanvas.drawBitmap(tempBitmap, 0, 0, null);
+
+        // Draw what you want on the canvas
+        tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+
+        // Save to bundle for use in main activity
+        filepath = saveToInternalStorage(tempBitmap);
+    }
+
+    private String saveToInternalStorage(Bitmap bitmapImage){
+        ContextWrapper cw = new ContextWrapper(getActivity().getApplicationContext());
+        // Path to /data/data/yourapp/app_data/imageDir
+        File directory = cw.getDir("imageDir", Context.MODE_PRIVATE);
+        // Create imageDir
+        File mypath = new File(directory, "map.jpg");
+
+        FileOutputStream fos = null;
+        try {
+            fos = new FileOutputStream(mypath);
+            // Use the compress method on the BitMap object to write image to the OutputStream
+            bitmapImage.compress(Bitmap.CompressFormat.PNG, 100, fos);
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                fos.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+        return directory.getAbsolutePath();
     }
 
     // TODO: Rename method, update argument and hook method into UI event
