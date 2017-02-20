@@ -20,12 +20,17 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ImageView;
 
+import com.example.max.pinpoint.BeaconData;
 import com.example.max.pinpoint.R;
 
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -48,6 +53,7 @@ public class MapFinishedFragment extends Fragment {
     private double length;
     private double width;
     private String filepath;
+    private List<BeaconData> beacons = new ArrayList<BeaconData>();
 
     private OnFragmentInteractionListener mListener;
 
@@ -88,11 +94,17 @@ public class MapFinishedFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_map_finished, container, false);
 
-        // Gets selected beacons
+        // Gets selected arguments
         Bundle bundle = this.getArguments();
         if (bundle != null) {
             length = bundle.getDouble("length");
             width = bundle.getDouble("width");
+
+            for(int i = 0; i < MAX_WALLS; ++i) {
+                BeaconData beacon = bundle.getParcelable("beacon" + Integer.toString(i + 1));
+                // Store them for use
+                beacons.add(beacon);
+            }
 
             new AlertDialog.Builder(getActivity())
                     .setMessage("Length: " + Double.toString(length) + " Width: " + Double.toString(width))
@@ -111,7 +123,16 @@ public class MapFinishedFragment extends Fragment {
 
                 // Pass the bundle to the main activity
                 Bundle args = new Bundle();
+
+                // Add the filepath to the bundle
                 args.putString("filepath", filepath);
+
+                // Add the beacons to the bundle
+                for (int i = 0; i < MAX_WALLS; ++i)
+                {
+                    args.putParcelable("beacon" + Integer.toString(i + 1), beacons.get(i));
+                }
+
                 frag.setArguments(args);
 
                 fragTransaction.replace(R.id.frame, frag);

@@ -1,6 +1,8 @@
 package com.example.max.pinpoint.fragment;
 
 import android.app.Activity;
+import android.bluetooth.le.ScanResult;
+import android.bluetooth.le.ScanSettings;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
@@ -11,6 +13,7 @@ import android.os.Bundle;
 import android.content.Context;
 import android.net.Uri;
 import android.support.v4.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,9 +25,19 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.lang.Math;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
+import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
+import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
+import com.example.max.pinpoint.BeaconData;
+import com.example.max.pinpoint.DistanceCalculator;
 import com.example.max.pinpoint.R;
 import com.example.max.pinpoint.TouchImageView;
+import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
+
+import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -34,9 +47,13 @@ import com.example.max.pinpoint.TouchImageView;
  * Use the {@link HomeFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class HomeFragment extends Fragment {
+public class HomeFragment extends Fragment implements ASScannerCallback {
 
     private OnFragmentInteractionListener mListener;
+
+    Bitmap image = null;
+    private List<BeaconData> beacons = new ArrayList<>();
+    private List<BeaconData> currentBeacons = new ArrayList<>();
 
     public HomeFragment() {
         // Required empty public constructor
@@ -53,8 +70,6 @@ public class HomeFragment extends Fragment {
     // TODO: Rename and change types and number of parameters
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
         return fragment;
     }
 
@@ -69,10 +84,31 @@ public class HomeFragment extends Fragment {
         // Inflate the layout for this fragment
         View rootView = inflater.inflate(R.layout.fragment_home, container, false);
 
+        Bundle bundle = null;
+
         if (this.getArguments() != null) {
-            Bundle bundle = this.getArguments();
+            bundle = this.getArguments();
             loadImageFromStorage(bundle.getString("filepath"), rootView);
+
+            // TODO: STORE BEACONS VIA DATABASE INSTEAD? PASS THROUGH CLASS OBJECT?
+            // Get beacons
+            for(int i = 0; i < MAX_WALLS; ++i) {
+                BeaconData beacon = bundle.getParcelable("beacon" + Integer.toString(i + 1));
+                // Store them for use
+                beacons.add(beacon);
+            }
+
+            startScan();
         }
+
+        DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
+
+        // Scan until new value for each beacon, done on callback
+        // Calculate distance to each beacon
+
+        // Input distance and coordinates (with center of square being 0,0) to trilateration calc
+        
+        // Get centroid and draw
 
         return rootView;
     }
@@ -97,6 +133,42 @@ public class HomeFragment extends Fragment {
             e.printStackTrace();
         }
 
+    }
+
+    private void startScan()
+    {
+        new ASBleScanner(this.getActivity(), this).setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY);
+        ASBleScanner.startScan();
+    }
+
+    @Override
+    //Callback from ASBleScanner
+    public void scannedBleDevices(ScanResult result)
+    {
+        Log.d("Debug", "Scanned result");
+        // Loop through the selected beacons
+        // Store result in beacons, IF the results refer to the same device
+        for (int i = 0; i < MAX_WALLS; ++i) {
+            if (Objects.equals(result.getDevice(), beacons.get(i).getResult().getDevice())) {
+                // Check if the beacon (device) is already stored
+                boolean contains = false;
+                for (int idx = 0; idx < currentBeacons.size(); idx++) {
+                    if (Objects.equals(currentBeacons.get(idx).getResult().getDevice(),
+                            new BeaconData(result).getResult().getDevice())) {
+                        // Device already added
+                        contains = true;
+                        // Replace the device with updated values in that position
+                        currentBeacons.get(idx).setResult(result);
+                        break;
+                    }
+                }
+
+                if (!contains) {
+                    // Scanned device not found in the list. NEW => add to list
+                    currentBeacons.add(new BeaconData(result));
+                }
+            }
+        }
     }
 
     /*

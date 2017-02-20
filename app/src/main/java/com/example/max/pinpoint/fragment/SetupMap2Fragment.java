@@ -21,6 +21,7 @@ import com.accent_systems.ibks_sdk.scanner.ASResultParser;
 import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
 import com.example.max.pinpoint.BackPressObserver;
 import com.example.max.pinpoint.BeaconData;
+import com.example.max.pinpoint.DistanceCalculator;
 import com.example.max.pinpoint.R;
 
 import org.json.JSONException;
@@ -43,8 +44,8 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  */
 public class SetupMap2Fragment extends Fragment implements BackPressObserver, ASScannerCallback {
     private OnFragmentInteractionListener mListener;
-    private List<BeaconData> beacons = new ArrayList<>();
-    private List<BeaconData> currentBeacons = new ArrayList<>();
+    private List<BeaconData> beacons = new ArrayList<BeaconData>();
+    private List<BeaconData> currentBeacons = new ArrayList<BeaconData>();
     private int timesScanned = 0;
     // TODO: Dynamically create variables based on number of walls
     private double wall0 = 0;
@@ -140,9 +141,16 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
 
                 // Create an bundle to share the wall lengths with the next step
                 Bundle args = new Bundle();
-                // Add each length to the activity
+                // Add each length to the bundle
                 args.putDouble("length", avgLength);
                 args.putDouble("width", avgWidth);
+
+                // Add the beacons to the bundle
+                for (int i = 0; i < MAX_WALLS; ++i)
+                {
+                    args.putParcelable("beacon" + Integer.toString(i + 1), beacons.get(i));
+                }
+
                 frag.setArguments(args);
 
                 fragTransaction.replace(R.id.frame, frag);
@@ -158,7 +166,7 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                 // Start scanning
                 startScan();
 
-                // Executing code on a 2000ms timer
+                // Executing code on a timer
                 final Handler timerHandler = new Handler();
                 timerHandler.postDelayed(new Runnable() {
                     @Override
@@ -177,33 +185,35 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                         else {
                             // TODO: Alternative check?
                             // Get distances
+                            DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
+
                             if (timesScanned < MAX_WALLS) {
                                 switch (timesScanned) {
                                     case 0:
                                         // Get distance to first and second
-                                        wall0 = wall0 + getDistance(0);
-                                        wall1 = wall1 + getDistance(1);
+                                        wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons);
+                                        wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons);
                                         ++timesScanned;
                                         currentBeacons.clear(); // Empty the array list
                                         break;
                                     case 1:
                                         // Get distance to second and third
-                                        wall1 = wall1 + getDistance(1);
-                                        wall2 = wall2 + getDistance(2);
+                                        wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons);
+                                        wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons);
                                         ++timesScanned;
                                         currentBeacons.clear(); // Empty the array list
                                         break;
                                     case 2:
                                         // Get distance to third and fourth
-                                        wall2 = wall2 + getDistance(2);
-                                        wall3 = wall3 + getDistance(3);
+                                        wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons);
+                                        wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons);
                                         ++timesScanned;
                                         currentBeacons.clear(); // Empty the array list
                                         break;
                                     case 3:
                                         // Get distance to fourth and first
-                                        wall3 = wall3 + getDistance(3);
-                                        wall0 = wall0 + getDistance(0);
+                                        wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons);
+                                        wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons);
                                         ++timesScanned;
                                         currentBeacons.clear(); // Empty the array list
                                         break;
@@ -237,29 +247,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
         });
 
         return rootView;
-    }
-
-    // Gets the distance from the user's current position to beacons at given indexes
-    private double getDistance(int first)
-    {
-        BeaconData beaconA = null;
-        JSONObject advertBeaconA = null;
-
-        // Update values for beacons
-        // Set new beacon and advertising data to local variables
-        // Check if the beacon was updated
-        for (BeaconData beacon : currentBeacons) {
-            if (Objects.equals(beacon.getResult().getDevice(), beacons.get(first).getResult().getDevice()) &&
-                    !Objects.equals(beacon.getResult(), beacons.get(first).getResult())) {
-                // If so, set things up
-                beaconA = beacon;
-                advertBeaconA = ASResultParser.getDataFromAdvertising(beacon.getResult());
-                break;
-            }
-        }
-
-        // Calculate distances
-        return calculateDistance(beaconA, advertBeaconA);
     }
 
     private void startScan()
@@ -297,38 +284,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                 }
             }
         }
-    }
-
-    // Return the distance
-    private double calculateDistance(BeaconData beacon, JSONObject advert)
-    {
-        /*
-         * For distance measurement, we know RSSI and txPower, so we just need to find distance
-         *
-         * We also know
-         * P = -10 * n * log(d) + A
-         *
-         * So given n = signal propagation constant, assumed 2 across empty space (all cases)
-         * d = distance
-         * A = txPower
-         * P = RSSI
-         *
-         * d = 10 ^ ((A - P) / (10 * n))
-         *
-         */
-        double n = 2; // Signal propagation constant assumed 2 (across empty space) for all cases
-        double A = 0;
-        try {
-            A = advert.getDouble("AdvTxPower");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        // 41 dBm is the signal loss that occurs over one meter; negate RSSI (given in negative) by adding since Eddystone is 0 based
-        double P = beacon.getResult().getRssi() + 41;
-
-        double result = Math.pow(10, ((A - P) / (10 * n)));
-        return result;
-
     }
 
     // TODO: Rename method, update argument and hook method into UI event
