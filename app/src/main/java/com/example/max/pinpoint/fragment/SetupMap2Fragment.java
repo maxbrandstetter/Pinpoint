@@ -172,18 +172,11 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                     @Override
                     public void run() {
                         // Check if there are enough elements in currentBeacons. If not, alert the user.
-                        if (currentBeacons.size() < MAX_WALLS)
+                        if (currentBeacons.size() == MAX_WALLS)
                         {
-                            new AlertDialog.Builder(getActivity())
-                                    .setMessage("The application needs time to scan. Please try again.")
-                                    .setPositiveButton("Ok", null)
-                                    .show();
-
                             // Stop Scanning
                             ASBleScanner.stopScan();
-                        }
-                        else {
-                            // TODO: Alternative check?
+
                             // Get distances
                             DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
 
@@ -240,9 +233,13 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                                 }
                             }
                         }
+                        else
+                        {
+                            // If not enough beacons have been scanned, recurse and delay again
+                            timerHandler.postDelayed(this, 1000);
+                        }
                     }
-                }, 5000);
-
+                }, 1000);
             }
         });
 

@@ -149,7 +149,7 @@ public class MapFinishedFragment extends Fragment {
         Canvas tempCanvas = new Canvas(tempBitmap);
         myRectPaint.setColor(Color.parseColor("#26686D"));
         myRectPaint.setStyle(Paint.Style.STROKE);
-        myRectPaint.setStrokeWidth(10);
+        myRectPaint.setStrokeWidth(4);
 
         tempCanvas.drawBitmap(tempBitmap, 0, 0, null);
 

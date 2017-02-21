@@ -152,22 +152,13 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 startScan();
 
                 // Scan until new value for each beacon, done on callback
-                // Executes code on a 5 second timer
-                // TODO: Change to observer, wait until the list is filled
+                // Executes code on a 1 second timer
                 final Handler timerHandler = new Handler();
                 timerHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        // Check if there are enough elements in currentBeacons. If not, alert the user.
-                        if (currentBeacons.size() < MAX_WALLS) {
-                            new AlertDialog.Builder(getActivity())
-                                    .setMessage("The application needs time to scan. Please try again.")
-                                    .setPositiveButton("Ok", null)
-                                    .show();
-
-                            // Stop Scanning
-                            ASBleScanner.stopScan();
-                        } else {
+                        // Check if there are enough elements in currentBeacons. If not, recurse
+                        if (currentBeacons.size() == MAX_WALLS) {
                             // Stop scanning for now
                             ASBleScanner.stopScan();
 
@@ -221,7 +212,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                     // Create canvas and draw map and location icon to it
                                     Canvas tempCanvas = new Canvas(mutableBitmap);
                                     tempCanvas.drawBitmap(mutableBitmap, 0, 0, null);
-                                    tempCanvas.drawCircle((float) location[0], (float) location[1], 5, paint);
+                                    tempCanvas.drawCircle((float) location[0], (float) location[1], 4, paint);
 
                                     img.setImageBitmap(mutableBitmap);
                                 }
@@ -234,8 +225,12 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                             // Clear the beacon data
                             currentBeacons.clear();
                         }
+                        else
+                        {
+                            timerHandler.postDelayed(this, 1000);
+                        }
                     }
-                }, 5000);
+                }, 1000);
             }
         });
 
