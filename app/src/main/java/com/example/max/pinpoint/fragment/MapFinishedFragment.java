@@ -41,10 +41,8 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  * create an instance of this fragment.
  */
 public class MapFinishedFragment extends Fragment {
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+
+    public static final int EXPANSION_FACTOR = 10;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -72,20 +70,12 @@ public class MapFinishedFragment extends Fragment {
     // TODO: Rename and change types and number of parameters
     public static MapFinishedFragment newInstance(String param1, String param2) {
         MapFinishedFragment fragment = new MapFinishedFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
         return fragment;
     }
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
-        }
     }
 
     @Override
@@ -133,6 +123,10 @@ public class MapFinishedFragment extends Fragment {
                     args.putParcelable("beacon" + Integer.toString(i + 1), beacons.get(i));
                 }
 
+                // Store width and length for relative distance measurements
+                args.putDouble("length", length);
+                args.putDouble("width", width);
+
                 frag.setArguments(args);
 
                 fragTransaction.replace(R.id.frame, frag);
@@ -147,8 +141,8 @@ public class MapFinishedFragment extends Fragment {
         Paint myRectPaint = new Paint();
         float x1 = 0;
         float y1 = 0;
-        float x2 = (float) length * 100;
-        float y2 = (float) width * 100;
+        float x2 = (float) length * EXPANSION_FACTOR;
+        float y2 = (float) width * EXPANSION_FACTOR;
 
         // Create a new image bitmap and attach a brand new canvas to it
         Bitmap tempBitmap = Bitmap.createBitmap((int)(x2), (int)(y2), Bitmap.Config.ARGB_8888);

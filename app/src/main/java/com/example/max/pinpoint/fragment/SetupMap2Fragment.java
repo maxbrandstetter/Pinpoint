@@ -226,8 +226,8 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                                 // Hard coded for rectangular rooms
 
                                 // Set averages for adjacent walls
-                                avgLength = (wall0 + wall2) / 2;
-                                avgWidth = (wall1 + wall3) / 2;
+                                avgWidth = (wall0 + wall2) / 2;
+                                avgLength = (wall1 + wall3) / 2;
                                 // Show continue button
                                 Button continueButton = (Button) getView().findViewById(R.id.continueButton);
                                 if (continueButton.getVisibility() == View.INVISIBLE) {

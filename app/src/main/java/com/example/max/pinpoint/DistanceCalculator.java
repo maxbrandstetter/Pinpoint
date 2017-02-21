@@ -14,7 +14,7 @@ import java.util.Objects;
 
 public class DistanceCalculator {
 
-    // Variables
+    // Should always be initial beacons to compare to, not the most recently loaded ones
     List<BeaconData> beacons;
 
     // Constructor

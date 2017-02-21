@@ -233,9 +233,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                     }
                 }
 
-                // Create new fragment
-                //SetupMap2Fragment mapFragment = new SetupMap2Fragment();
-
                 // Move to the next page
                 Fragment frag = new SetupMap2Fragment();
                 FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();

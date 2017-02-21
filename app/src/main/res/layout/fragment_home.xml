@@ -6,10 +6,24 @@
     android:background="@color/colorAccent"
     android:id="@+id/mapFrame">
 
-    <com.example.max.pinpoint.TouchImageView
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:id="@+id/mapView"
-        />
+        android:layout_height="match_parent">
+
+        <com.example.max.pinpoint.TouchImageView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:id="@+id/mapView"
+            />
+
+        <Button
+            android:id="@+id/pinpointme"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Pinpoint me!"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"/>
+
+    </RelativeLayout>
 
 </FrameLayout>

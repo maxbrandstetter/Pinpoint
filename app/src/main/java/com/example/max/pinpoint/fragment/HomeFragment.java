@@ -3,21 +3,29 @@ package com.example.max.pinpoint.fragment;
 import android.app.Activity;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Paint;
 import android.graphics.PointF;
 import android.graphics.Rect;
+import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
 import android.content.Context;
 import android.net.Uri;
+import android.os.Handler;
 import android.support.v4.app.Fragment;
+import android.support.v7.app.AlertDialog;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.MotionEvent;
+import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 
@@ -36,8 +44,14 @@ import com.example.max.pinpoint.DistanceCalculator;
 import com.example.max.pinpoint.R;
 import com.example.max.pinpoint.TouchImageView;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
+import com.lemmingapex.trilateration.TrilaterationFunction;
+
+import org.apache.commons.math3.analysis.function.Max;
+import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
+import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
 import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
+import static com.example.max.pinpoint.fragment.MapFinishedFragment.EXPANSION_FACTOR;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -54,6 +68,12 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
     Bitmap image = null;
     private List<BeaconData> beacons = new ArrayList<>();
     private List<BeaconData> currentBeacons = new ArrayList<>();
+    private double[] currentDistances = new double[MAX_WALLS];
+    private double length;
+    private double width;
+    private double[] location = new double[2]; // location stored as array of 2 values for a point
+    private String filepath;
+    private Bitmap map = null;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -90,6 +110,15 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             bundle = this.getArguments();
             loadImageFromStorage(bundle.getString("filepath"), rootView);
 
+            // Store filepath in shared preferences
+            SharedPreferences settings = this.getContext().getSharedPreferences("pinpoint", 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putString("filepath", bundle.getString("filepath"));
+            editor.commit();
+
+            // Store filepath locally
+            filepath = bundle.getString("filepath");
+
             // TODO: STORE BEACONS VIA DATABASE INSTEAD? PASS THROUGH CLASS OBJECT?
             // Get beacons
             for(int i = 0; i < MAX_WALLS; ++i) {
@@ -98,17 +127,117 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 beacons.add(beacon);
             }
 
-            startScan();
+            // Get length and width
+            length = bundle.getDouble("length");
+            width = bundle.getDouble("width");
+        }
+        // If no arguments have been passed, check for an existing filepath and load it
+        else
+        {
+            SharedPreferences settings = this.getContext().getSharedPreferences("pinpoint", 0);
+            // Returns null if the shared preference is not found
+            filepath = settings.getString("filepath", null);
+            // If not null, load the image
+            if (filepath != null)
+            {
+                loadImageFromStorage(filepath, rootView);
+            }
         }
 
-        DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
+        // TODO: only show if a map and beacons are available
+        Button pinpoint = (Button) rootView.findViewById(R.id.pinpointme);
+        pinpoint.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Start scanning
+                startScan();
 
-        // Scan until new value for each beacon, done on callback
-        // Calculate distance to each beacon
+                // Scan until new value for each beacon, done on callback
+                // Executes code on a 5 second timer
+                // TODO: Change to observer, wait until the list is filled
+                final Handler timerHandler = new Handler();
+                timerHandler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        // Check if there are enough elements in currentBeacons. If not, alert the user.
+                        if (currentBeacons.size() < MAX_WALLS) {
+                            new AlertDialog.Builder(getActivity())
+                                    .setMessage("The application needs time to scan. Please try again.")
+                                    .setPositiveButton("Ok", null)
+                                    .show();
 
-        // Input distance and coordinates (with center of square being 0,0) to trilateration calc
-        
-        // Get centroid and draw
+                            // Stop Scanning
+                            ASBleScanner.stopScan();
+                        } else {
+                            // Stop scanning for now
+                            ASBleScanner.stopScan();
+
+                            DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
+
+                            // Calculate distance to each beacon
+                            for (int i = 0; i < MAX_WALLS; ++i) {
+                                // Ensure that the distances are stored in the same
+                                // order as the current beacons for proper positioning
+                                for (int j = 0; j < MAX_WALLS; ++j)
+                                {
+                                    if (Objects.equals(currentBeacons.get(i).getResult().getDevice(),
+                                            beacons.get(j).getResult().getDevice())) {
+                                        currentDistances[j] = (distanceCalculator.getDistance(i, currentBeacons));
+                                    }
+                                }
+                            }
+
+                            // Set positions of each beacon based on stored/displayed order, where (0,0) is the top left corner of the map/room
+                            double[][] positions = {{width / 2, 0}, {width, length / 2}, {width / 2, length}, {0, length / 2}};
+
+                            // Input distance and coordinates (with center of square being 0,0) to trilateration calc
+                            NonLinearLeastSquaresSolver triSolver = new NonLinearLeastSquaresSolver
+                                    (new TrilaterationFunction(positions, currentDistances), new LevenbergMarquardtOptimizer());
+                            LeastSquaresOptimizer.Optimum optimum = triSolver.solve();
+
+                            // Get centroid
+                            location = optimum.getPoint().toArray();
+                            // Increase by factor used in map creation (for better resolution)
+                            location[0] = location[0] * EXPANSION_FACTOR;
+                            location[1] = location[1] * EXPANSION_FACTOR;
+
+                            // Refresh map with location drawn on
+                            if (filepath != null) {
+                                try {
+                                    // Set image view
+                                    TouchImageView img = (TouchImageView) rootView.findViewById(R.id.mapView);
+
+                                    File f = new File(filepath, "map.jpg");
+                                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+
+                                    // Convert to mutable bitmap to draw on canvas
+                                    Bitmap mutableBitmap = b.copy(Bitmap.Config.ARGB_8888, true);
+
+                                    // Create paint object
+                                    Paint paint = new Paint();
+                                    paint.setColor(Color.parseColor("#80CED7"));
+                                    paint.setStyle(Paint.Style.STROKE);
+                                    paint.setStrokeWidth(4);
+
+                                    // Create canvas and draw map and location icon to it
+                                    Canvas tempCanvas = new Canvas(mutableBitmap);
+                                    tempCanvas.drawBitmap(mutableBitmap, 0, 0, null);
+                                    tempCanvas.drawCircle((float) location[0], (float) location[1], 5, paint);
+
+                                    img.setImageBitmap(mutableBitmap);
+                                }
+                                catch(FileNotFoundException e)
+                                {
+                                    e.printStackTrace();
+                                }
+                            }
+
+                            // Clear the beacon data
+                            currentBeacons.clear();
+                        }
+                    }
+                }, 5000);
+            }
+        });
 
         return rootView;
     }
@@ -127,6 +256,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
             TouchImageView img = (TouchImageView) v.findViewById(R.id.mapView);
             img.setImageBitmap(b);
+            map = b;
         }
         catch (FileNotFoundException e)
         {
