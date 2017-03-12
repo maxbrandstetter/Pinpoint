@@ -42,7 +42,7 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  */
 public class MapFinishedFragment extends Fragment {
 
-    public static final int EXPANSION_FACTOR = 10;
+    public static final int EXPANSION_FACTOR = 50;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -141,8 +141,8 @@ public class MapFinishedFragment extends Fragment {
         Paint myRectPaint = new Paint();
         float x1 = 0;
         float y1 = 0;
-        float x2 = (float) length * EXPANSION_FACTOR;
-        float y2 = (float) width * EXPANSION_FACTOR;
+        float x2 = (float) width * EXPANSION_FACTOR;
+        float y2 = (float) length * EXPANSION_FACTOR;
 
         // Create a new image bitmap and attach a brand new canvas to it
         Bitmap tempBitmap = Bitmap.createBitmap((int)(x2), (int)(y2), Bitmap.Config.ARGB_8888);
@@ -155,6 +155,18 @@ public class MapFinishedFragment extends Fragment {
 
         // Draw what you want on the canvas
         tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
+
+        // TODO: Add beacon names to canvas?
+        // Draw the beacons
+        Paint beaconPaint = new Paint();
+        beaconPaint.setColor(Color.parseColor("#26686D"));
+        beaconPaint.setStyle(Paint.Style.STROKE);
+        beaconPaint.setStrokeWidth(2);
+
+        tempCanvas.drawCircle(x2 / 2, 0, 2, beaconPaint);
+        tempCanvas.drawCircle(x2, y2 / 2, 2, beaconPaint);
+        tempCanvas.drawCircle(x2 / 2, y2, 2, beaconPaint);
+        tempCanvas.drawCircle(0, y2 / 2, 2, beaconPaint);
 
         // Save to bundle for use in main activity
         filepath = saveToInternalStorage(tempBitmap);

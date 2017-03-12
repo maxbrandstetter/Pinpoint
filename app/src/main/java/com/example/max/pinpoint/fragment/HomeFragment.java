@@ -66,8 +66,8 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
     private OnFragmentInteractionListener mListener;
 
     Bitmap image = null;
-    private List<BeaconData> beacons = new ArrayList<>();
-    private List<BeaconData> currentBeacons = new ArrayList<>();
+    private ArrayList<BeaconData> beacons = new ArrayList<>();
+    private ArrayList<ArrayList<BeaconData>> currentBeacons = new ArrayList<ArrayList<BeaconData>>();
     private double[] currentDistances = new double[MAX_WALLS];
     private double length;
     private double width;
@@ -144,6 +144,11 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             }
         }
 
+        // Initialize currentBeacons as 4 empty lists
+        for (int i = 0; i < MAX_WALLS; i++) {
+            currentBeacons.add(new ArrayList<>());
+        }
+
         // TODO: only show if a map and beacons are available
         Button pinpoint = (Button) rootView.findViewById(R.id.pinpointme);
         pinpoint.setOnClickListener(new View.OnClickListener() {
@@ -159,74 +164,84 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                     public void run() {
                         // Check if there are enough elements in currentBeacons. If not, recurse
                         if (currentBeacons.size() == MAX_WALLS) {
-                            // Stop scanning for now
-                            ASBleScanner.stopScan();
+                            // Check that enough scans have been done for all beacons
+                            if (currentBeacons.get(0).size() == 10 && currentBeacons.get(1).size() == 10
+                                    && currentBeacons.get(2).size() == 10 && currentBeacons.get(3).size() == 10) {
+                                // Stop scanning for now
+                                ASBleScanner.stopScan();
 
-                            DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
+                                DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
 
-                            // Calculate distance to each beacon
-                            for (int i = 0; i < MAX_WALLS; ++i) {
-                                // Ensure that the distances are stored in the same
-                                // order as the current beacons for proper positioning
-                                for (int j = 0; j < MAX_WALLS; ++j)
-                                {
-                                    if (Objects.equals(currentBeacons.get(i).getResult().getDevice(),
-                                            beacons.get(j).getResult().getDevice())) {
-                                        currentDistances[j] = (distanceCalculator.getDistance(i, currentBeacons));
+                                // Calculate distance to each beacon
+                                for (int i = 0; i < MAX_WALLS; ++i) {
+                                    // Ensure that the distances are stored in the same
+                                    // order as the current beacons for proper positioning
+                                    for (int j = 0; j < MAX_WALLS; ++j) {
+                                        if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(),
+                                                beacons.get(j).getResult().getDevice())) {
+                                            currentDistances[j] = (distanceCalculator.getDistance(i, currentBeacons.get(i)));
+                                        }
                                     }
                                 }
-                            }
 
-                            // Set positions of each beacon based on stored/displayed order, where (0,0) is the top left corner of the map/room
-                            double[][] positions = {{width / 2, 0}, {width, length / 2}, {width / 2, length}, {0, length / 2}};
+                                // Set positions of each beacon based on stored/displayed order, where (0,0) is the top left corner of the map/room
+                                double[][] positions = {{width / 2, 0}, {width, length / 2}, {width / 2, length}, {0, length / 2}};
 
-                            // Input distance and coordinates (with center of square being 0,0) to trilateration calc
-                            NonLinearLeastSquaresSolver triSolver = new NonLinearLeastSquaresSolver
-                                    (new TrilaterationFunction(positions, currentDistances), new LevenbergMarquardtOptimizer());
-                            LeastSquaresOptimizer.Optimum optimum = triSolver.solve();
+                                // Input distance and coordinates (with center of square being 0,0) to trilateration calc
+                                NonLinearLeastSquaresSolver triSolver = new NonLinearLeastSquaresSolver
+                                        (new TrilaterationFunction(positions, currentDistances), new LevenbergMarquardtOptimizer());
+                                LeastSquaresOptimizer.Optimum optimum = triSolver.solve();
 
-                            // Get centroid
-                            location = optimum.getPoint().toArray();
-                            // Increase by factor used in map creation (for better resolution)
-                            location[0] = location[0] * EXPANSION_FACTOR;
-                            location[1] = location[1] * EXPANSION_FACTOR;
+                                // Get centroid
+                                location = optimum.getPoint().toArray();
+                                // Increase by factor used in map creation (for better resolution)
+                                location[0] = location[0] * EXPANSION_FACTOR;
+                                location[1] = location[1] * EXPANSION_FACTOR;
 
-                            // Refresh map with location drawn on
-                            if (filepath != null) {
-                                try {
-                                    // Set image view
-                                    TouchImageView img = (TouchImageView) rootView.findViewById(R.id.mapView);
+                                // Refresh map with location drawn on
+                                if (filepath != null) {
+                                    try {
+                                        // Set image view
+                                        TouchImageView img = (TouchImageView) rootView.findViewById(R.id.mapView);
 
-                                    File f = new File(filepath, "map.jpg");
-                                    Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
+                                        File f = new File(filepath, "map.jpg");
+                                        Bitmap b = BitmapFactory.decodeStream(new FileInputStream(f));
 
-                                    // Convert to mutable bitmap to draw on canvas
-                                    Bitmap mutableBitmap = b.copy(Bitmap.Config.ARGB_8888, true);
+                                        // Convert to mutable bitmap to draw on canvas
+                                        Bitmap mutableBitmap = b.copy(Bitmap.Config.ARGB_8888, true);
 
-                                    // Create paint object
-                                    Paint paint = new Paint();
-                                    paint.setColor(Color.parseColor("#80CED7"));
-                                    paint.setStyle(Paint.Style.STROKE);
-                                    paint.setStrokeWidth(4);
+                                        // Create paint object
+                                        Paint paint = new Paint();
+                                        paint.setColor(Color.parseColor("#80CED7"));
+                                        paint.setStyle(Paint.Style.STROKE);
+                                        paint.setStrokeWidth(4);
 
-                                    // Create canvas and draw map and location icon to it
-                                    Canvas tempCanvas = new Canvas(mutableBitmap);
-                                    tempCanvas.drawBitmap(mutableBitmap, 0, 0, null);
-                                    tempCanvas.drawCircle((float) location[0], (float) location[1], 4, paint);
+                                        // Create canvas and draw map and location icon to it
+                                        Canvas tempCanvas = new Canvas(mutableBitmap);
+                                        tempCanvas.drawBitmap(mutableBitmap, 0, 0, null);
+                                        tempCanvas.drawCircle((float) location[0], (float) location[1], 4, paint);
 
-                                    img.setImageBitmap(mutableBitmap);
+                                        img.setImageBitmap(mutableBitmap);
+                                    } catch (FileNotFoundException e) {
+                                        e.printStackTrace();
+                                    }
                                 }
-                                catch(FileNotFoundException e)
+
+                                // Empty the array lists
+                                for (ArrayList<BeaconData> list : currentBeacons)
                                 {
-                                    e.printStackTrace();
+                                    list.clear();
                                 }
                             }
-
-                            // Clear the beacon data
-                            currentBeacons.clear();
+                            else
+                            {
+                                // If not enough beacons have been scanned, recurse and delay again
+                                timerHandler.postDelayed(this, 1000);
+                            }
                         }
                         else
                         {
+                            // If not enough beacons have been scanned, recurse and delay again
                             timerHandler.postDelayed(this, 1000);
                         }
                     }
@@ -275,22 +290,20 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
         // Store result in beacons, IF the results refer to the same device
         for (int i = 0; i < MAX_WALLS; ++i) {
             if (Objects.equals(result.getDevice(), beacons.get(i).getResult().getDevice())) {
-                // Check if the beacon (device) is already stored
-                boolean contains = false;
-                for (int idx = 0; idx < currentBeacons.size(); idx++) {
-                    if (Objects.equals(currentBeacons.get(idx).getResult().getDevice(),
-                            new BeaconData(result).getResult().getDevice())) {
-                        // Device already added
-                        contains = true;
-                        // Replace the device with updated values in that position
-                        currentBeacons.get(idx).setResult(result);
-                        break;
-                    }
+                if (currentBeacons.get(i).isEmpty()) {
+                    // List is empty, add to a list equivalent in index to selected beacons
+                    currentBeacons.get(i).add(new BeaconData(result));
+                    break;
                 }
 
-                if (!contains) {
-                    // Scanned device not found in the list. NEW => add to list
-                    currentBeacons.add(new BeaconData(result));
+                // Check if the beacon (device) is already stored
+                boolean contains = false;
+                if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
+
+                    // Add another device with updated values, if less than some value are in the list
+                    if (currentBeacons.get(i).size() < 10) {
+                    currentBeacons.get(i).add(new BeaconData(result));
+                    }
                 }
             }
         }

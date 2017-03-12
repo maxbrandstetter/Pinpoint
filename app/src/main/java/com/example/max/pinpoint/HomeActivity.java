@@ -39,7 +39,6 @@ public class HomeActivity extends AppCompatActivity {
     private ImageView imgNavHeaderBg, imgProfile;
     private TextView txtName, txtWebsite;
     private Toolbar toolbar;
-    private FloatingActionButton fab;
 
     // Index to identify current menu item
     public static int navItemIndex = 0;
@@ -71,19 +70,9 @@ public class HomeActivity extends AppCompatActivity {
 
         drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         navigationView = (NavigationView) findViewById(R.id.nav_view);
-        fab = (FloatingActionButton) findViewById(R.id.fab);
 
         // Load toolbar titles from string.xml
         activityTitles = getResources().getStringArray(R.array.nav_item_activity_titles);
-
-        // TODO: CHANGE LATER
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "What a test!", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
 
         // Initialize the menu
         setUpNavigationView();
@@ -106,7 +95,6 @@ public class HomeActivity extends AppCompatActivity {
         // If user selects the current menu again, do nothing
         if (getSupportFragmentManager().findFragmentByTag(CURRENT_TAG) != null) {
             drawer.closeDrawers();
-            toggleFab();
             return;
         }
 
@@ -129,8 +117,6 @@ public class HomeActivity extends AppCompatActivity {
         if (mPendingRunnable != null) {
             mHandler.post(mPendingRunnable);
         }
-
-        toggleFab();
 
         // Close the drawer on click
         drawer.closeDrawers();
@@ -309,13 +295,5 @@ public class HomeActivity extends AppCompatActivity {
         }
 
         return super.onOptionsItemSelected(item);
-    }
-
-    // Show or hide the FAB
-    private void toggleFab() {
-        /*if (navItemIndex == 0)
-            fab.show();
-        else*/
-            fab.hide();
     }
 }

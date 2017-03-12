@@ -5,6 +5,7 @@ import com.accent_systems.ibks_sdk.scanner.ASResultParser;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
@@ -56,8 +57,9 @@ public class DistanceCalculator {
     }
 
     // Gets the distance from the user's current position to beacons at given indexes
-    public double getDistance(int first, List<BeaconData> currentBeacons)
+    public double getDistance(int index, List<BeaconData> currentBeacons)
     {
+        ArrayList<Double> distances = new ArrayList<>();
         BeaconData beaconA = null;
         JSONObject advertBeaconA = null;
 
@@ -65,16 +67,51 @@ public class DistanceCalculator {
         // Set new beacon and advertising data to local variables
         // Check if the beacon was updated
         for (BeaconData beacon : currentBeacons) {
-            if (Objects.equals(beacon.getResult().getDevice(), beacons.get(first).getResult().getDevice()) &&
-                    !Objects.equals(beacon.getResult(), beacons.get(first).getResult())) {
+            if (Objects.equals(beacon.getResult().getDevice(), beacons.get(index).getResult().getDevice())
+                /*&& !Objects.equals(beacon.getResult(), beacons.get(index).getResult())*/) {
                 // If so, set things up
                 beaconA = beacon;
                 advertBeaconA = ASResultParser.getDataFromAdvertising(beacon.getResult());
-                break;
+
+                // Calculate distance for current beacon
+                distances.add(calculateDistance(beaconA, advertBeaconA));
             }
         }
 
-        // Calculate distances
-        return calculateDistance(beaconA, advertBeaconA);
+        // Calculate confidence interval at 95% and remove outliers
+        // Get mean
+        double sum = 0;
+        for (Double d : distances)
+            sum += d;
+        double mean = sum / distances.size();
+
+        // Get standard deviation
+        double difsum = 0;
+        for (Double d : distances)
+            difsum += (d - mean) * (d - mean);
+        double stddev = Math.sqrt(difsum / distances.size());
+
+        // Get confidence interval
+        double low = mean - 1.96 * (stddev / Math.sqrt(distances.size()));
+        double high = mean + 1.96 * (stddev / Math.sqrt(distances.size()));
+
+        // Remove outliers
+        for (int i = 0; i < distances.size(); i++)
+        {
+            if (distances.get(i) < low || distances.get(i) > high)
+            {
+                distances.remove(i);
+                i--;
+            }
+        }
+
+        // Recalculate mean
+        sum = 0;
+        for (Double d : distances)
+            sum += d;
+        mean = sum / distances.size();
+
+        // Return mean
+        return mean;
     }
 }

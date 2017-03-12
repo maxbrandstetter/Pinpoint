@@ -228,7 +228,7 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                 for (BeaconData beacon : activeBeacons) {
                     if (beacon.isSelected())
                     {
-                        // TODO: Fix bug; beacons store in incorrect order
+                        // TODO: Fix bug; beacons store in scanned order not selected order
                         chosenBeacons.add(beacon);
                     }
                 }

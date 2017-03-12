@@ -1,9 +1,12 @@
 package com.example.max.pinpoint.fragment;
 
 
+import android.app.ProgressDialog;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.DialogInterface;
+import android.graphics.Color;
+import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -15,6 +18,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ExpandableListAdapter;
+import android.widget.ProgressBar;
 
 import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
 import com.accent_systems.ibks_sdk.scanner.ASResultParser;
@@ -44,8 +49,8 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  */
 public class SetupMap2Fragment extends Fragment implements BackPressObserver, ASScannerCallback {
     private OnFragmentInteractionListener mListener;
-    private List<BeaconData> beacons = new ArrayList<BeaconData>();
-    private List<BeaconData> currentBeacons = new ArrayList<BeaconData>();
+    private ArrayList<BeaconData> beacons = new ArrayList<BeaconData>();
+    private ArrayList<ArrayList<BeaconData>> currentBeacons = new ArrayList<ArrayList<BeaconData>>();
     private int timesScanned = 0;
     // TODO: Dynamically create variables based on number of walls
     private double wall0 = 0;
@@ -110,6 +115,10 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                     .show();
         }
 
+        // Initialize currentBeacons as 4 empty lists
+        for (int i = 0; i < MAX_WALLS; i++) {
+            currentBeacons.add(new ArrayList<>());
+        }
 
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
@@ -158,13 +167,36 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
             }
         });
 
+        // Setup progress dialog
+        ProgressDialog pd = new ProgressDialog(getActivity());
+        pd.setMessage("Scanning for beacons...");
+        pd.setTitle("Scanning");
+        pd.setCancelable(false);
+
+        // Create thread to handle showing and hiding the loading icon
+        Handler handler = new Handler();
+        Runnable showLoadingIcon = new Runnable() {
+            @Override
+            public void run() {
+                pd.show();
+            }
+        };
+        Runnable hideLoadingIcon = new Runnable() {
+            @Override
+            public void run() {
+                pd.hide();
+            }
+        };
+
         Button scanBtn = (Button) rootView.findViewById(R.id.scanButton);
         scanBtn.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
                 // Scan and store beacons values, get wall lengths, normalize lengths
-
                 // Start scanning
                 startScan();
+
+                // Show loading icon
+                handler.post(showLoadingIcon);
 
                 // Executing code on a timer
                 final Handler timerHandler = new Handler();
@@ -172,69 +204,92 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                     @Override
                     public void run() {
                         // Check if there are enough elements in currentBeacons. If not, alert the user.
-                        if (currentBeacons.size() == MAX_WALLS)
-                        {
-                            // Stop Scanning
-                            ASBleScanner.stopScan();
-
-                            // Get distances
-                            DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
-
-                            if (timesScanned < MAX_WALLS) {
-                                switch (timesScanned) {
-                                    case 0:
-                                        // Get distance to first and second
-                                        wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons);
-                                        wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons);
-                                        ++timesScanned;
-                                        currentBeacons.clear(); // Empty the array list
-                                        break;
-                                    case 1:
-                                        // Get distance to second and third
-                                        wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons);
-                                        wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons);
-                                        ++timesScanned;
-                                        currentBeacons.clear(); // Empty the array list
-                                        break;
-                                    case 2:
-                                        // Get distance to third and fourth
-                                        wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons);
-                                        wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons);
-                                        ++timesScanned;
-                                        currentBeacons.clear(); // Empty the array list
-                                        break;
-                                    case 3:
-                                        // Get distance to fourth and first
-                                        wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons);
-                                        wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons);
-                                        ++timesScanned;
-                                        currentBeacons.clear(); // Empty the array list
-                                        break;
-                                }
+                        if (currentBeacons.size() == MAX_WALLS) {
+                            // Check that enough scans have been made for all beacons
+                            if (currentBeacons.get(0).size() == 10 && currentBeacons.get(1).size() == 10
+                                    && currentBeacons.get(2).size() == 10 && currentBeacons.get(3).size() == 10) {
                                 // Stop Scanning
                                 ASBleScanner.stopScan();
-                            }
 
-                            if (timesScanned == MAX_WALLS) {
-                                // Hard coded for rectangular rooms
+                                // Get distances
+                                DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
 
-                                // Set averages for adjacent walls
-                                avgWidth = (wall0 + wall2) / 2;
-                                avgLength = (wall1 + wall3) / 2;
-                                // Show continue button
-                                Button continueButton = (Button) getView().findViewById(R.id.continueButton);
-                                if (continueButton.getVisibility() == View.INVISIBLE) {
-                                    continueButton.setVisibility(View.VISIBLE);
+                                if (timesScanned < MAX_WALLS) {
+                                    switch (timesScanned) {
+                                        case 0:
+                                            // Get distance to first and second
+                                            wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons.get(0));
+                                            wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons.get(1));
+                                            ++timesScanned;
+                                            // Empty the array lists
+                                            for (ArrayList<BeaconData> list : currentBeacons) {
+                                                list.clear();
+                                            }
+                                            // Hide loading icon
+                                            handler.post(hideLoadingIcon);
+                                            break;
+                                        case 1:
+                                            // Get distance to second and third
+                                            wall1 = wall1 + distanceCalculator.getDistance(1, currentBeacons.get(1));
+                                            wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons.get(2));
+                                            ++timesScanned;
+                                            // Empty the array lists
+                                            for (ArrayList<BeaconData> list : currentBeacons) {
+                                                list.clear();
+                                            }
+                                            // Hide loading icon
+                                            handler.post(hideLoadingIcon);
+                                            break;
+                                        case 2:
+                                            // Get distance to third and fourth
+                                            wall2 = wall2 + distanceCalculator.getDistance(2, currentBeacons.get(2));
+                                            wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons.get(3));
+                                            ++timesScanned;
+                                            // Empty the array lists
+                                            for (ArrayList<BeaconData> list : currentBeacons) {
+                                                list.clear();
+                                            }
+                                            // Hide loading icon
+                                            handler.post(hideLoadingIcon);
+                                            break;
+                                        case 3:
+                                            // Get distance to fourth and first
+                                            wall3 = wall3 + distanceCalculator.getDistance(3, currentBeacons.get(3));
+                                            wall0 = wall0 + distanceCalculator.getDistance(0, currentBeacons.get(0));
+                                            ++timesScanned;
+                                            // Empty the array lists
+                                            for (ArrayList<BeaconData> list : currentBeacons) {
+                                                list.clear();
+                                            }
+                                            // Hide loading icon
+                                            handler.post(hideLoadingIcon);
+                                            break;
+                                    }
+                                    // Stop Scanning
+                                    ASBleScanner.stopScan();
                                 }
-                                // Remove scan button
-                                Button scanButton = (Button) getView().findViewById(R.id.scanButton);
-                                if (scanButton.getVisibility() == View.VISIBLE) {
-                                    scanButton.setVisibility(View.INVISIBLE);
+
+                                if (timesScanned == MAX_WALLS) {
+                                    // Hard coded for rectangular rooms
+                                    // Set averages for opposite walls
+                                    avgWidth = (wall0 + wall2) / 2;
+                                    avgLength = (wall1 + wall3) / 2;
+                                    // Show continue button
+                                    Button continueButton = (Button) getView().findViewById(R.id.continueButton);
+                                    if (continueButton.getVisibility() == View.INVISIBLE) {
+                                        continueButton.setVisibility(View.VISIBLE);
+                                    }
+                                    // Remove scan button
+                                    Button scanButton = (Button) getView().findViewById(R.id.scanButton);
+                                    if (scanButton.getVisibility() == View.VISIBLE) {
+                                        scanButton.setVisibility(View.INVISIBLE);
+                                    }
                                 }
+                            } else {
+                                // If not enough beacons have been scanned, recurse and delay again
+                                timerHandler.postDelayed(this, 1000);
                             }
-                        }
-                        else
-                        {
+                        } else {
                             // If not enough beacons have been scanned, recurse and delay again
                             timerHandler.postDelayed(this, 1000);
                         }
@@ -242,7 +297,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                 }, 1000);
             }
         });
-
         return rootView;
     }
 
@@ -261,23 +315,17 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
         // Store result in beacons, IF the results refer to the same device
         for (int i = 0; i < MAX_WALLS; ++i) {
             if (Objects.equals(result.getDevice(), beacons.get(i).getResult().getDevice())) {
-
-                // Check if the beacon (device) is already stored
-                boolean contains = false;
-                for (int idx = 0; idx < currentBeacons.size(); idx++) {
-                    if (Objects.equals(currentBeacons.get(idx).getResult().getDevice(),
-                            new BeaconData(result).getResult().getDevice())) {
-                        // Device already added
-                        contains = true;
-                        // Replace the device with updated values in that position
-                        currentBeacons.get(idx).setResult(result);
-                        break;
-                    }
+                // List is empty, add to a list equivalent in index to selected beacons
+                if (currentBeacons.get(i).isEmpty()) {
+                    currentBeacons.get(i).add(new BeaconData(result));
+                    break;
                 }
 
-                if (!contains) {
-                    // Scanned device not found in the list. NEW => add to list
-                    currentBeacons.add(new BeaconData(result));
+                if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
+                    // Add another device with updated values, if less than some value are in the list
+                    if (currentBeacons.get(i).size() < 10) {
+                        currentBeacons.get(i).add(new BeaconData(result));
+                    }
                 }
             }
         }
