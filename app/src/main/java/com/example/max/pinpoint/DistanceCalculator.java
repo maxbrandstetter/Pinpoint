@@ -23,6 +23,7 @@ public class DistanceCalculator {
     {
         beacons = allBeacons;
     }
+    public DistanceCalculator() {}
 
     // Calculate the distance based on given beacon info
     public double calculateDistance(BeaconData beacon, JSONObject advert)
@@ -113,5 +114,17 @@ public class DistanceCalculator {
 
         // Return mean
         return mean;
+    }
+
+    public float expansionScale(double width, double length)
+    {
+        float expansion = 50;
+
+        if (width > length)
+            expansion = 1000 / (float) width;
+        else if (length > width)
+            expansion = 1000 / (float) length;
+
+        return expansion;
     }
 }

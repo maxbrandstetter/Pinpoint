@@ -206,8 +206,8 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
                         // Check if there are enough elements in currentBeacons. If not, alert the user.
                         if (currentBeacons.size() == MAX_WALLS) {
                             // Check that enough scans have been made for all beacons
-                            if (currentBeacons.get(0).size() == 10 && currentBeacons.get(1).size() == 10
-                                    && currentBeacons.get(2).size() == 10 && currentBeacons.get(3).size() == 10) {
+                            if (currentBeacons.get(0).size() == 20 && currentBeacons.get(1).size() == 20
+                                    && currentBeacons.get(2).size() == 20 && currentBeacons.get(3).size() == 20) {
                                 // Stop Scanning
                                 ASBleScanner.stopScan();
 
@@ -323,7 +323,7 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
 
                 if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
                     // Add another device with updated values, if less than some value are in the list
-                    if (currentBeacons.get(i).size() < 10) {
+                    if (currentBeacons.get(i).size() < 20) {
                         currentBeacons.get(i).add(new BeaconData(result));
                     }
                 }

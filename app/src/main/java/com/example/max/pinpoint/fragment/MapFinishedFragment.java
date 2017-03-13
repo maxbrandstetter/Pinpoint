@@ -21,6 +21,7 @@ import android.widget.Button;
 import android.widget.ImageView;
 
 import com.example.max.pinpoint.BeaconData;
+import com.example.max.pinpoint.DistanceCalculator;
 import com.example.max.pinpoint.R;
 
 import java.io.File;
@@ -41,8 +42,6 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  * create an instance of this fragment.
  */
 public class MapFinishedFragment extends Fragment {
-
-    public static final int EXPANSION_FACTOR = 50;
 
     // TODO: Rename and change types of parameters
     private String mParam1;
@@ -139,17 +138,18 @@ public class MapFinishedFragment extends Fragment {
 
     public void generateMap() {
         Paint myRectPaint = new Paint();
+        DistanceCalculator dc = new DistanceCalculator();
         float x1 = 0;
         float y1 = 0;
-        float x2 = (float) width * EXPANSION_FACTOR;
-        float y2 = (float) length * EXPANSION_FACTOR;
+        float x2 = (float) width * dc.expansionScale(width, length);
+        float y2 = (float) length * dc.expansionScale(width, length);
 
         // Create a new image bitmap and attach a brand new canvas to it
         Bitmap tempBitmap = Bitmap.createBitmap((int)(x2), (int)(y2), Bitmap.Config.ARGB_8888);
         Canvas tempCanvas = new Canvas(tempBitmap);
         myRectPaint.setColor(Color.parseColor("#26686D"));
         myRectPaint.setStyle(Paint.Style.STROKE);
-        myRectPaint.setStrokeWidth(4);
+        myRectPaint.setStrokeWidth(10);
 
         tempCanvas.drawBitmap(tempBitmap, 0, 0, null);
 
@@ -161,7 +161,7 @@ public class MapFinishedFragment extends Fragment {
         Paint beaconPaint = new Paint();
         beaconPaint.setColor(Color.parseColor("#26686D"));
         beaconPaint.setStyle(Paint.Style.STROKE);
-        beaconPaint.setStrokeWidth(2);
+        beaconPaint.setStrokeWidth(20);
 
         tempCanvas.drawCircle(x2 / 2, 0, 2, beaconPaint);
         tempCanvas.drawCircle(x2, y2 / 2, 2, beaconPaint);

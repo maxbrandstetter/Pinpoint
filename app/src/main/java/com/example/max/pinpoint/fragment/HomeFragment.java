@@ -51,7 +51,6 @@ import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 
 import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
-import static com.example.max.pinpoint.fragment.MapFinishedFragment.EXPANSION_FACTOR;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -165,8 +164,8 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                         // Check if there are enough elements in currentBeacons. If not, recurse
                         if (currentBeacons.size() == MAX_WALLS) {
                             // Check that enough scans have been done for all beacons
-                            if (currentBeacons.get(0).size() == 10 && currentBeacons.get(1).size() == 10
-                                    && currentBeacons.get(2).size() == 10 && currentBeacons.get(3).size() == 10) {
+                            if (currentBeacons.get(0).size() == 20 && currentBeacons.get(1).size() == 20
+                                    && currentBeacons.get(2).size() == 20 && currentBeacons.get(3).size() == 20) {
                                 // Stop scanning for now
                                 ASBleScanner.stopScan();
 
@@ -195,8 +194,8 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                 // Get centroid
                                 location = optimum.getPoint().toArray();
                                 // Increase by factor used in map creation (for better resolution)
-                                location[0] = location[0] * EXPANSION_FACTOR;
-                                location[1] = location[1] * EXPANSION_FACTOR;
+                                location[0] = location[0] * distanceCalculator.expansionScale(width, length);
+                                location[1] = location[1] * distanceCalculator.expansionScale(width, length);
 
                                 // Refresh map with location drawn on
                                 if (filepath != null) {
@@ -301,7 +300,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
 
                     // Add another device with updated values, if less than some value are in the list
-                    if (currentBeacons.get(i).size() < 10) {
+                    if (currentBeacons.get(i).size() < 20) {
                     currentBeacons.get(i).add(new BeaconData(result));
                     }
                 }
