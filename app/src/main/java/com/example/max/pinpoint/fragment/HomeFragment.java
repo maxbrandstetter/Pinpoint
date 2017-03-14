@@ -197,6 +197,16 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                 location[0] = location[0] * distanceCalculator.expansionScale(width, length);
                                 location[1] = location[1] * distanceCalculator.expansionScale(width, length);
 
+                                // Prevent locations from exceeding bounds
+                                if (location[0] > width)
+                                    location[0] = width;
+                                if (location[0] < 0)
+                                    location[0] = 0;
+                                if (location[1] > length)
+                                    location[1] = length;
+                                if (location[1] < 0)
+                                    location[1] = 0;
+
                                 // Refresh map with location drawn on
                                 if (filepath != null) {
                                     try {
@@ -212,13 +222,16 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                         // Create paint object
                                         Paint paint = new Paint();
                                         paint.setColor(Color.parseColor("#80CED7"));
-                                        paint.setStyle(Paint.Style.STROKE);
-                                        paint.setStrokeWidth(4);
+                                        paint.setStyle(Paint.Style.FILL);
+
+                                        float expansion = distanceCalculator.expansionScale(width, length) / 4;
+                                        if (expansion < 1)
+                                            expansion = 1;
 
                                         // Create canvas and draw map and location icon to it
                                         Canvas tempCanvas = new Canvas(mutableBitmap);
                                         tempCanvas.drawBitmap(mutableBitmap, 0, 0, null);
-                                        tempCanvas.drawCircle((float) location[0], (float) location[1], 4, paint);
+                                        tempCanvas.drawCircle((float) location[0], (float) location[1], expansion, paint);
 
                                         img.setImageBitmap(mutableBitmap);
                                     } catch (FileNotFoundException e) {

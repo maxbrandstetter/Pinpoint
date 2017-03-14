@@ -7,6 +7,7 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
+import android.util.SparseBooleanArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -490,26 +491,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                 }
 
                 ASBleScanner.startScan();
-
-                /* Shows data based on device configuration
-                BluetoothAdapter mBluetoothAdapter = ASBleScanner.getmBluetoothAdapter();
-                if(mBluetoothAdapter != null) {
-                    ASConDevice mcondevice;
-                    mcondevice =  new ASConDevice(SetupMap1Fragment.this.getActivity(), mBluetoothAdapter, SetupMap1Fragment.this);
-                    new ASEDSTService(mcondevice, SetupMap1Fragment.this, 10);
-                    new ASiBeaconService(mcondevice, SetupMap1Fragment.this, 10);
-                    new ASGlobalService(mcondevice, SetupMap1Fragment.this, 10);
-
-                    //show dialog to notify the user that the app is working
-                    connDialog.setMessage("Showing info on Android Monitor!");
-                    connDialog.show();
-
-                    ASConDevice.connectDevice(address);
-
-                } else{
-                    Log.i(TAG,"BLE not enabled/supported!");
-                }
-                */
             }
         });
     }
