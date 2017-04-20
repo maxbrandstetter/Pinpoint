@@ -183,19 +183,24 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                     }
                                 }
 
-                                // Set positions of each beacon based on stored/displayed order, where (0,0) is the top left corner of the map/room
+                                // Set positions of each beacon based on stored/displayed order, where (0,0) is the bottom left corner of the map/room
                                 double[][] positions = {{width / 2, 0}, {width, length / 2}, {width / 2, length}, {0, length / 2}};
 
-                                // Input distance and coordinates (with center of square being 0,0) to trilateration calc
+                                // Input distance and coordinates to trilateration calc
                                 NonLinearLeastSquaresSolver triSolver = new NonLinearLeastSquaresSolver
                                         (new TrilaterationFunction(positions, currentDistances), new LevenbergMarquardtOptimizer());
                                 LeastSquaresOptimizer.Optimum optimum = triSolver.solve();
 
                                 // Get centroid
                                 location = optimum.getPoint().toArray();
-                                // Increase by factor used in map creation (for better resolution)
-                                location[0] = location[0] * distanceCalculator.expansionScale(width, length);
-                                location[1] = location[1] * distanceCalculator.expansionScale(width, length);
+
+                                // Location debug
+                                /*
+                                new AlertDialog.Builder(getActivity())
+                                        .setMessage("X: " + Double.toString(location[0]) + " Y: " + Double.toString(location[1]))
+                                        .setPositiveButton("Ok", null)
+                                        .show();
+                                */
 
                                 // Prevent locations from exceeding bounds
                                 if (location[0] > width)
@@ -206,6 +211,10 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                     location[1] = length;
                                 if (location[1] < 0)
                                     location[1] = 0;
+
+                                // Increase by factor used in map creation (for better resolution)
+                                location[0] = location[0] * distanceCalculator.expansionScale(width, length);
+                                location[1] = location[1] * distanceCalculator.expansionScale(width, length);
 
                                 // Refresh map with location drawn on
                                 if (filepath != null) {
@@ -224,7 +233,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                         paint.setColor(Color.parseColor("#80CED7"));
                                         paint.setStyle(Paint.Style.FILL);
 
-                                        float expansion = distanceCalculator.expansionScale(width, length) / 4;
+                                        float expansion = distanceCalculator.expansionScale(width, length) / 2;
                                         if (expansion < 1)
                                             expansion = 1;
 

@@ -26,7 +26,7 @@ public class DistanceCalculator {
     public DistanceCalculator() {}
 
     // Calculate the distance based on given beacon info
-    public double calculateDistance(BeaconData beacon, JSONObject advert)
+    public double calculateDistance(double rssi)
     {
         /*
          * For distance measurement, we know RSSI and txPower, so we just need to find distance
@@ -42,6 +42,7 @@ public class DistanceCalculator {
          * d = 10 ^ ((A - P) / (10 * n))
          *
          */
+        /*
         double n = 2; // Signal propagation constant assumed 2 (across empty space) for all cases
         double A = 0;
         try {
@@ -49,18 +50,52 @@ public class DistanceCalculator {
         } catch (JSONException e) {
             e.printStackTrace();
         }
-        // 41 dBm is the signal loss that occurs over one meter; negate RSSI (given in negative) by adding since Eddystone is 0 based
-        double P = beacon.getResult().getRssi() + 41;
+        // P = RSSI
+        double P = beacon.getResult().getRssi();
 
         double result = Math.pow(10, ((A - P) / (10 * n)));
         return result;
+        */
 
+        /*
+            We'll be using a power regression formula, or y = A * x^B + C in order to estimate
+            distance.  This is based on known values of RSSI at certain distances, with 1m
+            measurement being the basis, as it provides the most accuracy at distances less than
+            20 meters.
+            Output will always be a distance in meters.
+            For iBKS beacons, which are being used almost exclusively for this project,
+            the values are:
+            A = 2.614351365
+            B = 4.897481636
+            C = -1.614351365
+            x = known RSSI / RSSI at 1m
+         */
+        double A = 2.614351365;
+        double B = 4.897481636;
+        double C = -1.614351365;
+        double X = rssi / -59;
+
+        double result = A * Math.pow(X, B) + C;
+
+        /*
+            Distances at less than 1 meter result in negative value, attempt to approximate.
+            Since C is meant to "zero" the formula for 1m measurements, removing the constant
+            gives a close approximation for 0m measurements.  Rather than using a different
+            formula, we'll just remove C and recalculate when the result is negative, for the
+            sake of simplicity.
+         */
+        if (result < 0)
+        {
+            result = A * Math.pow(X, B);
+        }
+
+        return result;
     }
 
     // Gets the distance from the user's current position to beacons at given indexes
     public double getDistance(int index, List<BeaconData> currentBeacons)
     {
-        ArrayList<Double> distances = new ArrayList<>();
+        ArrayList<Integer> values = new ArrayList<>();
         BeaconData beaconA = null;
         JSONObject advertBeaconA = null;
 
@@ -72,48 +107,49 @@ public class DistanceCalculator {
                 /*&& !Objects.equals(beacon.getResult(), beacons.get(index).getResult())*/) {
                 // If so, set things up
                 beaconA = beacon;
-                advertBeaconA = ASResultParser.getDataFromAdvertising(beacon.getResult());
+                // advertBeaconA = ASResultParser.getDataFromAdvertising(beacon.getResult());
 
-                // Calculate distance for current beacon
-                distances.add(calculateDistance(beaconA, advertBeaconA));
+                // Add RSSI for current beacon
+                values.add(beaconA.getResult().getRssi());
             }
         }
 
-        // Calculate confidence interval at 95% and remove outliers
+        // Calculate confidence interval and remove outliers
         // Get mean
         double sum = 0;
-        for (Double d : distances)
+        for (Integer d : values)
             sum += d;
-        double mean = sum / distances.size();
+        double mean = sum / values.size();
 
         // Get standard deviation
         double difsum = 0;
-        for (Double d : distances)
+        for (Integer d : values)
             difsum += (d - mean) * (d - mean);
-        double stddev = Math.sqrt(difsum / distances.size());
+        double stddev = Math.sqrt(difsum / values.size());
 
-        // Get confidence interval
-        double low = mean - 1.96 * (stddev / Math.sqrt(distances.size()));
-        double high = mean + 1.96 * (stddev / Math.sqrt(distances.size()));
+        // Get confidence interval (95 = 2.093, 90 = 1.729)
+        double low = mean - 2.093 * (stddev / Math.sqrt(values.size()));
+        double high = mean + 2.093 * (stddev / Math.sqrt(values.size()));
 
         // Remove outliers
-        for (int i = 0; i < distances.size(); i++)
+        for (int i = 0; i < values.size(); i++)
         {
-            if (distances.get(i) < low || distances.get(i) > high)
+            if (values.get(i) < low || values.get(i) > high)
             {
-                distances.remove(i);
+                values.remove(i);
                 i--;
             }
         }
 
         // Recalculate mean
         sum = 0;
-        for (Double d : distances)
+        for (Integer d : values)
             sum += d;
-        mean = sum / distances.size();
+        mean = sum / values.size();
 
-        // Return mean
-        return mean;
+        // TODO: Handle scenarios where all values are removed; lower confidence level or rescan
+        // Return mean distance calculation
+        return calculateDistance(mean);
     }
 
     public float expansionScale(double width, double length)
