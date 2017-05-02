@@ -6,6 +6,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -114,6 +115,13 @@ public class DistanceCalculator {
             }
         }
 
+        // Save original values through deep copy
+        ArrayList<Integer> originalValues = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            originalValues.add(0);
+        }
+        Collections.copy(originalValues, values);
+
         // Calculate confidence interval and remove outliers
         // Get mean
         double sum = 0;
@@ -125,11 +133,11 @@ public class DistanceCalculator {
         double difsum = 0;
         for (Integer d : values)
             difsum += (d - mean) * (d - mean);
-        double stddev = Math.sqrt(difsum / values.size());
+        double stddev = Math.sqrt(difsum / (values.size() - 1));
 
         // Get confidence interval (95 = 2.093, 90 = 1.729)
-        double low = mean - 2.093 * (stddev / Math.sqrt(values.size()));
-        double high = mean + 2.093 * (stddev / Math.sqrt(values.size()));
+        double low = mean - 1.729 * (stddev / Math.sqrt(values.size()));
+        double high = mean + 1.729 * (stddev / Math.sqrt(values.size()));
 
         // Remove outliers
         for (int i = 0; i < values.size(); i++)
@@ -147,7 +155,15 @@ public class DistanceCalculator {
             sum += d;
         mean = sum / values.size();
 
-        // TODO: Handle scenarios where all values are removed; lower confidence level or rescan
+        // If all values are removed, just calculate mean of original values
+        if (values.isEmpty())
+        {
+            sum = 0;
+            for (Integer d : originalValues)
+                sum += d;
+            mean = sum / originalValues.size();
+        }
+
         // Return mean distance calculation
         return calculateDistance(mean);
     }
