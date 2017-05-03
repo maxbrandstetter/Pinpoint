@@ -82,6 +82,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
     private String filepath;
     private Bitmap map = null;
     private boolean incompatible = false;
+    private boolean full = false;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -170,10 +171,22 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             currentBeacons.add(new ArrayList<>());
         }
 
-        // TODO: only show if a map and beacons are available
+        // TODO: Show stop button when pressed, create stop button that stops scanning and shows start
         Button pinpoint = (Button) rootView.findViewById(R.id.pinpointme);
         pinpoint.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
+
+                // Show stop button
+                Button stopButton = (Button) getView().findViewById(R.id.stop);
+                if (stopButton.getVisibility() == View.INVISIBLE) {
+                    stopButton.setVisibility(View.VISIBLE);
+                }
+                // Remove start button
+                Button startButton = (Button) getView().findViewById(R.id.pinpointme);
+                if (startButton.getVisibility() == View.VISIBLE) {
+                    startButton.setVisibility(View.INVISIBLE);
+                }
+
                 // Start scanning
                 startScan();
 
@@ -186,13 +199,14 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                         // If incompatible is true, return since the map and beacons don't match
                         if (incompatible)
                             return;
+
                         // Check if there are enough elements in currentBeacons. If not, recurse
                         if (currentBeacons.size() == MAX_WALLS) {
                             // Check that enough scans have been done for all beacons
                             if (currentBeacons.get(0).size() == 20 && currentBeacons.get(1).size() == 20
                                     && currentBeacons.get(2).size() == 20 && currentBeacons.get(3).size() == 20) {
-                                // Stop scanning for now
-                                ASBleScanner.stopScan();
+                                // Set full to true to enable replacement
+                                full = true;
 
                                 DistanceCalculator distanceCalculator = new DistanceCalculator(beacons);
 
@@ -273,10 +287,15 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                     }
                                 }
 
-                                // Empty the array lists
-                                for (ArrayList<BeaconData> list : currentBeacons)
-                                {
-                                    list.clear();
+                                // If full, recurse after 5 seconds
+                                if (full) {
+                                    timerHandler.postDelayed(this, 5000);
+                                }
+                                else {
+                                    // Empty the array lists
+                                    for (ArrayList<BeaconData> list : currentBeacons) {
+                                        list.clear();
+                                    }
                                 }
                             }
                             else
@@ -292,6 +311,25 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                         }
                     }
                 }, 1000);
+            }
+        });
+
+        Button stop = (Button) rootView.findViewById(R.id.stop);
+        stop.setOnClickListener(new View.OnClickListener() {
+            public void onClick(View v) {
+                // Stop scanning
+                ASBleScanner.stopScan();
+
+                // Show start button
+                Button startButton = (Button) getView().findViewById(R.id.pinpointme);
+                if (startButton.getVisibility() == View.INVISIBLE) {
+                    startButton.setVisibility(View.VISIBLE);
+                }
+                // Remove stop button
+                Button stopButton = (Button) getView().findViewById(R.id.stop);
+                if (stopButton.getVisibility() == View.VISIBLE) {
+                    stopButton.setVisibility(View.INVISIBLE);
+                }
             }
         });
 
@@ -396,10 +434,29 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                         if (currentBeacons.get(i).size() < 20) {
                             currentBeacons.get(i).add(new BeaconData(result));
                         }
+                        else
+                        {
+                            // Treat as queue, remove first element, add new element to back
+                            shiftLeft(i);
+                            // Add new element
+                            currentBeacons.get(i).add(new BeaconData(result));
+                        }
                     }
                 }
             }
         }
+    }
+
+    // Shift currentBeacons left by one place
+    public void shiftLeft(int index)
+    {
+        //make a loop to run through the array list, starting at the first element
+        for (int i = 1; i < currentBeacons.get(index).size(); i++) {
+            //set the current element in the current list to the previous element
+            currentBeacons.get(index).set(i - 1, currentBeacons.get(index).get(i));
+        }
+        //remove the last element
+        currentBeacons.get(index).remove(currentBeacons.get(index).size() - 1);
     }
 
     /*
