@@ -41,5 +41,5 @@ dependencies {
     compile 'com.android.support:support-v4:24.2.1'
     compile 'com.accent_systems.ibks-sdk:ibks-sdk:1.0.1'
     compile 'com.lemmingapex.trilateration:trilateration:1.0.1'
-
+    compile 'com.google.code.gson:gson:2.7'
 }

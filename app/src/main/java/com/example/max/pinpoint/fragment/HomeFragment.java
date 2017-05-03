@@ -8,9 +8,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
@@ -32,17 +30,25 @@ import android.widget.ImageView;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.lang.Math;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
 
 import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
 import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
 import com.example.max.pinpoint.BeaconData;
 import com.example.max.pinpoint.DistanceCalculator;
+import com.example.max.pinpoint.ObjectSerializer;
 import com.example.max.pinpoint.R;
+import com.example.max.pinpoint.TinyDB;
 import com.example.max.pinpoint.TouchImageView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
@@ -66,6 +72,8 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
 
     Bitmap image = null;
     private ArrayList<BeaconData> beacons = new ArrayList<>();
+    private ArrayList<BeaconData> retrievedBeacons = new ArrayList<>(); // Beacons retrieved from shared preferences
+    private ArrayList<String> beaconAddresses = new ArrayList<>();
     private ArrayList<ArrayList<BeaconData>> currentBeacons = new ArrayList<ArrayList<BeaconData>>();
     private double[] currentDistances = new double[MAX_WALLS];
     private double length;
@@ -73,6 +81,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
     private double[] location = new double[2]; // location stored as array of 2 values for a point
     private String filepath;
     private Bitmap map = null;
+    private boolean incompatible = false;
 
     public HomeFragment() {
         // Required empty public constructor
@@ -109,22 +118,28 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             bundle = this.getArguments();
             loadImageFromStorage(bundle.getString("filepath"), rootView);
 
-            // Store filepath in shared preferences
-            SharedPreferences settings = this.getContext().getSharedPreferences("pinpoint", 0);
-            SharedPreferences.Editor editor = settings.edit();
-            editor.putString("filepath", bundle.getString("filepath"));
-            editor.commit();
-
             // Store filepath locally
             filepath = bundle.getString("filepath");
 
-            // TODO: STORE BEACONS VIA DATABASE INSTEAD? PASS THROUGH CLASS OBJECT?
             // Get beacons
             for(int i = 0; i < MAX_WALLS; ++i) {
                 BeaconData beacon = bundle.getParcelable("beacon" + Integer.toString(i + 1));
                 // Store them for use
                 beacons.add(beacon);
             }
+
+            // Store filepath in shared preferences
+            SharedPreferences settings = this.getContext().getSharedPreferences("pinpoint", 0);
+            SharedPreferences.Editor editor = settings.edit();
+            editor.putString("filepath", filepath);
+
+            // Store beacon addresses
+            for (int i = 0; i < MAX_WALLS; i++) {
+                editor.putString("Beacon" + Integer.toString(i), beacons.get(i).getResult().getDevice().getAddress());
+            }
+
+            // Commit shared preferences
+            editor.commit();
 
             // Get length and width
             length = bundle.getDouble("length");
@@ -137,9 +152,16 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             // Returns null if the shared preference is not found
             filepath = settings.getString("filepath", null);
             // If not null, load the image
-            if (filepath != null)
-            {
+            if (filepath != null) {
                 loadImageFromStorage(filepath, rootView);
+            }
+            // Get beacon addresses
+            // Populate beacons if possible (if not, notify user that map is incompatible); occurs during normal scanning
+            for (int i = 0; i < MAX_WALLS; i++) {
+                String beaconAddress = settings.getString("Beacon" + Integer.toString(i), "");
+                if (beaconAddress != "") {
+                    beaconAddresses.add(beaconAddress);
+                }
             }
         }
 
@@ -161,6 +183,9 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 timerHandler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        // If incompatible is true, return since the map and beacons don't match
+                        if (incompatible)
+                            return;
                         // Check if there are enough elements in currentBeacons. If not, recurse
                         if (currentBeacons.size() == MAX_WALLS) {
                             // Check that enough scans have been done for all beacons
@@ -310,20 +335,67 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
         // Loop through the selected beacons
         // Store result in beacons, IF the results refer to the same device
         for (int i = 0; i < MAX_WALLS; ++i) {
-            if (Objects.equals(result.getDevice(), beacons.get(i).getResult().getDevice())) {
-                if (currentBeacons.get(i).isEmpty()) {
-                    // List is empty, add to a list equivalent in index to selected beacons
-                    currentBeacons.get(i).add(new BeaconData(result));
-                    break;
+            // If not enough beacons, attempt to find beacons based on stored addresses
+            if (beacons.size() != MAX_WALLS) {
+                // Ensure that we have addresses
+                if (!beaconAddresses.isEmpty()) {
+                    // Add beacon to beacons if it matches an existing address and isn't stored yet
+                    if (Objects.equals(result.getDevice().getAddress(), beaconAddresses.get(i))) {
+                        boolean stored = false;
+                        for (int j = 0; j < retrievedBeacons.size(); j++) {
+                            if (retrievedBeacons.isEmpty())
+                                break;
+
+                            if (Objects.equals(beaconAddresses.get(i), retrievedBeacons.get(j).getResult().getDevice().getAddress())) {
+                                stored = true;
+                            }
+                        }
+                        // If the beacon isn't stored, add it in the order the addresses are stored in
+                        if (!stored) {
+                            retrievedBeacons.add(new BeaconData(result));
+                            // Order beacons if enough have been stored
+                            if (retrievedBeacons.size() == MAX_WALLS) {
+                                for (int addressIdx = 0; addressIdx < retrievedBeacons.size(); addressIdx++) {
+                                    for (int retrievedIdx = 0; retrievedIdx < beaconAddresses.size(); retrievedIdx++) {
+                                        // If the retrieved beacon matches the beacon address, add that beacon to beacons
+                                        if (Objects.equals(retrievedBeacons.get(retrievedIdx).getResult().getDevice().getAddress(), beaconAddresses.get(addressIdx))) {
+                                            beacons.add(retrievedBeacons.get(retrievedIdx));
+                                        }
+                                    }
+                                }
+                            }
+                            break;
+                        }
+                    }
                 }
+                else {
+                    // Notify user that map is incompatible
+                    new AlertDialog.Builder(getActivity())
+                            .setMessage("The current map and beacon setup is incompatible, please create a new map.")
+                            .setPositiveButton("Ok", null)
+                            .show();
+                    // Set incompatible to true to prevent further activity
+                    incompatible = true;
+                    return;
+                }
+            }
+            // Add beacons and stuff
+            else {
+                if (Objects.equals(result.getDevice(), beacons.get(i).getResult().getDevice())) {
+                    if (currentBeacons.get(i).isEmpty()) {
+                        // List is empty, add to a list equivalent in index to selected beacons
+                        currentBeacons.get(i).add(new BeaconData(result));
+                        break;
+                    }
 
-                // Check if the beacon (device) is already stored
-                boolean contains = false;
-                if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
+                    // Check if the beacon (device) is already stored
+                    boolean contains = false;
+                    if (Objects.equals(currentBeacons.get(i).get(0).getResult().getDevice(), result.getDevice())) {
 
-                    // Add another device with updated values, if less than some value are in the list
-                    if (currentBeacons.get(i).size() < 20) {
-                    currentBeacons.get(i).add(new BeaconData(result));
+                        // Add another device with updated values, if less than some value are in the list
+                        if (currentBeacons.get(i).size() < 20) {
+                            currentBeacons.get(i).add(new BeaconData(result));
+                        }
                     }
                 }
             }
