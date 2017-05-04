@@ -268,7 +268,7 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                                         paint.setColor(Color.parseColor("#80CED7"));
                                         paint.setStyle(Paint.Style.FILL);
 
-                                        float expansion = distanceCalculator.expansionScale(width, length) / 2;
+                                        float expansion = distanceCalculator.expansionScale(width, length) / 4;
                                         if (expansion < 1)
                                             expansion = 1;
 
