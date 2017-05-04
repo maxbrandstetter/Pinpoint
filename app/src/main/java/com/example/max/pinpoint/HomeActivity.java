@@ -291,6 +291,11 @@ public class HomeActivity extends AppCompatActivity {
         // noinspection SimplifiableIfStatement
         if (id == R.id.action_logout) {
             Toast.makeText(getApplicationContext(), "User Logged Out", Toast.LENGTH_LONG).show();
+
+            // Return to login screen
+            Intent accountsIntent = new Intent(HomeActivity.this, LoginActivity.class);
+            startActivity(accountsIntent);
+
             return true;
         }
 

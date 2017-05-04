@@ -1,6 +1,5 @@
 package com.example.max.pinpoint.fragment;
 
-import android.app.Activity;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.SharedPreferences;
@@ -9,11 +8,8 @@ import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.graphics.drawable.BitmapDrawable;
 import android.os.Bundle;
 
-import android.content.Context;
 import android.net.Uri;
 import android.os.Handler;
 import android.support.v4.app.Fragment;
@@ -22,37 +18,23 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.MotionEvent;
 import android.widget.Button;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.lang.Math;
-import java.lang.reflect.Type;
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
 import com.accent_systems.ibks_sdk.scanner.ASScannerCallback;
 import com.example.max.pinpoint.BeaconData;
 import com.example.max.pinpoint.DistanceCalculator;
-import com.example.max.pinpoint.ObjectSerializer;
 import com.example.max.pinpoint.R;
-import com.example.max.pinpoint.TinyDB;
 import com.example.max.pinpoint.TouchImageView;
-import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import com.lemmingapex.trilateration.NonLinearLeastSquaresSolver;
 import com.lemmingapex.trilateration.TrilaterationFunction;
 
-import org.apache.commons.math3.analysis.function.Max;
 import org.apache.commons.math3.fitting.leastsquares.LeastSquaresOptimizer;
 import org.apache.commons.math3.fitting.leastsquares.LevenbergMarquardtOptimizer;
 

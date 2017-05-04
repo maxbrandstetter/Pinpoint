@@ -1,6 +1,5 @@
 package com.example.max.pinpoint.fragment;
 
-import android.content.Context;
 import android.content.DialogInterface;
 import android.net.Uri;
 import android.os.Bundle;

@@ -1,44 +1,131 @@
 package com.example.max.pinpoint;
 
 /**
- * Created by Max on 10/23/2016.
+ * Created by Max on 10/23/2016, updated from tutorial at
+ * http://www.androidtutorialshub.com/android-login-and-register-with-sqlite-database-tutorial/
  */
 
-import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.design.widget.Snackbar;
+import android.support.design.widget.TextInputEditText;
+import android.support.design.widget.TextInputLayout;
+import android.support.v4.widget.NestedScrollView;
+import android.support.v7.app.AppCompatActivity;
+import android.support.v7.widget.AppCompatButton;
+import android.support.v7.widget.AppCompatTextView;
+import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
 
-public class LoginActivity extends Activity {
+import com.example.max.pinpoint.R;
+import com.example.max.pinpoint.helpers.InputValidation;
+import com.example.max.pinpoint.sql.DatabaseHelper;
+
+public class LoginActivity extends AppCompatActivity implements View.OnClickListener {
+    private final AppCompatActivity activity = LoginActivity.this;
+
+    private NestedScrollView nestedScrollView;
+
+    private TextInputLayout textInputLayoutEmail;
+    private TextInputLayout textInputLayoutPassword;
+
+    private TextInputEditText textInputEditTextEmail;
+    private TextInputEditText textInputEditTextPassword;
+
+    private AppCompatButton appCompatButtonLogin;
+
+    private AppCompatTextView textViewLinkRegister;
+
+    private InputValidation inputValidation;
+    private DatabaseHelper databaseHelper;
+
     @Override
-    public void onCreate(Bundle savedInstanceState) {
+    protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // setting default screen to login.xml
         setContentView(R.layout.login);
 
-        TextView registerScreen = (TextView) findViewById(R.id.link_to_register);
+        initViews();
+        initListeners();
+        initObjects();
+    }
 
-        // Listening to register new account link
-        registerScreen.setOnClickListener(new View.OnClickListener() {
+    // Initialize views
+    private void initViews() {
 
-            public void onClick(View v) {
-                // Switching to Register screen
-                Intent i = new Intent(getApplicationContext(), RegisterActivity.class);
-                startActivity(i);
-            }
-        });
+        nestedScrollView = (NestedScrollView) findViewById(R.id.nestedScrollView);
 
-        TextView loginSuccess = (TextView) findViewById(R.id.btnLogin);
+        textInputLayoutEmail = (TextInputLayout) findViewById(R.id.textInputLayoutEmail);
+        textInputLayoutPassword = (TextInputLayout) findViewById(R.id.textInputLayoutPassword);
 
-        // Listening to login button
-        loginSuccess.setOnClickListener(new View.OnClickListener() {
+        textInputEditTextEmail = (TextInputEditText) findViewById(R.id.textInputEditTextEmail);
+        textInputEditTextPassword = (TextInputEditText) findViewById(R.id.textInputEditTextPassword);
 
-            public void onClick(View v) {
-                // Switching to Home screen
-                Intent i = new Intent(getApplicationContext(), HomeActivity.class);
-                startActivity(i);
-            }
-        });
+        appCompatButtonLogin = (AppCompatButton) findViewById(R.id.appCompatButtonLogin);
+
+        textViewLinkRegister = (AppCompatTextView) findViewById(R.id.textViewLinkRegister);
+
+    }
+
+    // Initialize listeners
+    private void initListeners() {
+        appCompatButtonLogin.setOnClickListener(this);
+        textViewLinkRegister.setOnClickListener(this);
+    }
+
+    // Initialize objects to be used
+    private void initObjects() {
+        databaseHelper = new DatabaseHelper(activity);
+        inputValidation = new InputValidation(activity);
+
+    }
+
+    // Listen the click on view
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.appCompatButtonLogin:
+                verifyFromSQLite();
+                break;
+            case R.id.textViewLinkRegister:
+                // Navigate to RegisterActivity
+                Intent intentRegister = new Intent(getApplicationContext(), RegisterActivity.class);
+                startActivity(intentRegister);
+                break;
+        }
+    }
+
+    // Validate the input text fields and verify login credentials from SQLite
+    private void verifyFromSQLite() {
+        if (!inputValidation.isInputEditTextFilled(textInputEditTextEmail, textInputLayoutEmail, getString(R.string.error_message_email))) {
+            return;
+        }
+        if (!inputValidation.isInputEditTextEmail(textInputEditTextEmail, textInputLayoutEmail, getString(R.string.error_message_email))) {
+            return;
+        }
+        if (!inputValidation.isInputEditTextFilled(textInputEditTextPassword, textInputLayoutPassword, getString(R.string.error_message_email))) {
+            return;
+        }
+
+        if (databaseHelper.checkUser(textInputEditTextEmail.getText().toString().trim()
+                , textInputEditTextPassword.getText().toString().trim())) {
+
+
+            Intent accountsIntent = new Intent(activity, HomeActivity.class);
+            emptyInputEditText();
+            startActivity(accountsIntent);
+
+
+        } else {
+            // Snack Bar to show success message that record is wrong
+            Snackbar.make(nestedScrollView, getString(R.string.error_valid_email_password), Snackbar.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * This method is to empty all input edit text
+     */
+    private void emptyInputEditText() {
+        textInputEditTextEmail.setText(null);
+        textInputEditTextPassword.setText(null);
     }
 }

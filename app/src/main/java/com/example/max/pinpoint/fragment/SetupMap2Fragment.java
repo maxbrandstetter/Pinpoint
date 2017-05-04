@@ -5,8 +5,6 @@ import android.app.ProgressDialog;
 import android.bluetooth.le.ScanResult;
 import android.bluetooth.le.ScanSettings;
 import android.content.DialogInterface;
-import android.graphics.Color;
-import android.graphics.PorterDuff;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -18,8 +16,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ExpandableListAdapter;
-import android.widget.ProgressBar;
 
 import com.accent_systems.ibks_sdk.scanner.ASBleScanner;
 import com.accent_systems.ibks_sdk.scanner.ASResultParser;
@@ -29,11 +25,7 @@ import com.example.max.pinpoint.BeaconData;
 import com.example.max.pinpoint.DistanceCalculator;
 import com.example.max.pinpoint.R;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Objects;
 
 import static android.os.Debug.waitForDebugger;
