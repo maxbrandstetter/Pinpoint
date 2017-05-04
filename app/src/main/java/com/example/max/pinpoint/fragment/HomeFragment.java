@@ -121,12 +121,16 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 editor.putString("Beacon" + Integer.toString(i), beacons.get(i).getResult().getDevice().getAddress());
             }
 
-            // Commit shared preferences
-            editor.commit();
-
             // Get length and width
             length = bundle.getDouble("length");
             width = bundle.getDouble("width");
+
+            // Store length and width
+            editor.putLong("length", (long)length);
+            editor.putLong("width", (long)width);
+
+            // Commit shared preferences
+            editor.commit();
         }
         // If no arguments have been passed, check for an existing filepath and load it
         else
@@ -145,6 +149,16 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
                 if (beaconAddress != "") {
                     beaconAddresses.add(beaconAddress);
                 }
+            }
+
+            // Get width and length
+            long l = settings.getLong("length", 0);
+            if (l != 0) {
+                length = l;
+            }
+            long w = settings.getLong("width", 0);
+            if (w != 0) {
+                width = w;
             }
         }
 
