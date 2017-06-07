@@ -524,55 +524,16 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
 
     @Override
     public void scannedBleDevices(ScanResult result){
-
         String advertisingString = ASResultParser.byteArrayToHex(result.getScanRecord().getBytes());
 
         String logstr = result.getDevice().getAddress()+" / RSSI: "+result.getRssi()+" / Adv packet: "+advertisingString;
 
-        // Check if scanned device is already in the list by mac address
-        boolean contains = false;
-        for(int i=0; i<scannedDevicesList.size(); i++){
-            if(scannedDevicesList.get(i).contains(result.getDevice().getAddress())){
-                // Device already added
-                contains = true;
-                // Replace the device with updated values in that position
-                scannedDevicesList.set(i, result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
-                break;
-            }
-        }
-
-        if(!contains){
-            // Scanned device not found in the list. NEW => add to list
-            scannedDevicesList.add(result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
-            // Devices are only added to the activeBeacons list once
-            activeBeacons.add(new BeaconData(result));
-        }
-
-        // After modify the list, notify the adapter that changes have been made so it updates the UI.
-        // UI changes must be done in the main thread
-        if (isAdded())
-        {
-            getActivity().runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    adapter.notifyDataSetChanged();
-                }
-            });
-        }
-
         JSONObject advData;
         switch (ASResultParser.getAdvertisingType(result)){
             case ASUtils.TYPE_IBEACON:
-                /**** Example to get data from advertising ***
-                 advData = ASResultParser.getDataFromAdvertising(result);
-                 try {
-                 Log.i(TAG, "FrameType = " +advData.getString("FrameType")+" AdvTxPower = "+advData.getString("AdvTxPower")+" UUID = "+advData.getString("UUID")+" Major = "+advData.getString("Major")+" Minor = "+advData.getString("Minor"));
-                 }catch (Exception ex){
-                 Log.i(TAG,"Error parsing JSON");
-                 }
-                 /*******************************************/
                 Log.i(TAG,result.getDevice().getName()+" - iBEACON - "+logstr);
                 break;
+            // Only do things with data IF the device is of type Eddystone UID
             case ASUtils.TYPE_EDDYSTONE_UID:
                 /**** Example to get data from advertising ***
                  advData = ASResultParser.getDataFromAdvertising(result);
@@ -582,53 +543,51 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                  Log.i(TAG,"Error parsing JSON");
                  }
                  /*******************************************/
+                // Check if scanned device is already in the list by mac address
+                boolean contains = false;
+                for(int i = 0; i < scannedDevicesList.size(); i++){
+                    if(scannedDevicesList.get(i).contains(result.getDevice().getAddress())){
+                        // Device already added
+                        contains = true;
+                        // Replace the device with updated values in that position
+                        scannedDevicesList.set(i, result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
+                        break;
+                    }
+                }
+
+                if(!contains){
+                    // Check if the device contains a UID, if it does, add it
+                    if (result.getScanRecord().getServiceUuids() != null)
+                    {
+                        // Scanned device not found in the list. NEW => add to list
+                        scannedDevicesList.add(result.getRssi()+"  "+result.getDevice().getName()+ "\n       ("+result.getDevice().getAddress()+")");
+                        // Devices are only added to the activeBeacons list once
+                        activeBeacons.add(new BeaconData(result));
+                    }
+                }
+
+                // After modify the list, notify the adapter that changes have been made so it updates the UI.
+                // UI changes must be done in the main thread
+                if (isAdded())
+                {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            adapter.notifyDataSetChanged();
+                        }
+                    });
+                }
+
                 Log.i(TAG,result.getDevice().getName()+" - UID - "+logstr);
                 break;
             case ASUtils.TYPE_EDDYSTONE_URL:
-                /**** Example to get data from advertising ***
-                 advData = ASResultParser.getDataFromAdvertising(result);
-                 try {
-                 Log.i(TAG, "FrameType = " +advData.getString("FrameType")+"  AdvTxPower = "+advData.getString("AdvTxPower")+" Url = "+advData.getString("Url"));
-                 }catch (Exception ex){
-                 Log.i(TAG,"Error parsing JSON");
-                 }
-                 /*******************************************/
                 Log.i(TAG,result.getDevice().getName()+" - URL - "+logstr);
 
                 break;
             case ASUtils.TYPE_EDDYSTONE_TLM:
-                /**** Example to get data from advertising ***
-                 advData = ASResultParser.getDataFromAdvertising(result);
-                 try {
-                 if(advData.getString("Version").equals("0")){
-                 Log.i(TAG, "FrameType = " +advData.getString("FrameType")+" Version = "+advData.getString("Version")+" Vbatt = "+advData.getString("Vbatt")+" Temp = "+advData.getString("Temp")+" AdvCount = "+advData.getString("AdvCount")+" TimeUp = "+advData.getString("TimeUp"));
-                 }
-                 else{
-                 Log.i(TAG, "FrameType = " +advData.getString("FrameType")+" Version = "+advData.getString("Version")+" EncryptedTLMData = "+advData.getString("EncryptedTLMData")+" Salt = "+advData.getString("Salt")+" IntegrityCheck = "+advData.getString("IntegrityCheck"));
-                 }
-                 }catch (Exception ex){
-                 Log.i(TAG,"Error parsing JSON");
-                 }
-                 /*******************************************/
                 Log.i(TAG,result.getDevice().getName()+" - TLM - "+logstr);
                 break;
             case ASUtils.TYPE_EDDYSTONE_EID:
-                /**** Example to get EID in Clear by the air ***
-                 if(!readingEID) {
-                 readingEID = true;
-                 new ASEDSTService(null,this,10);
-                 ASEDSTService.setClient_ProjectId(client, getPrefs.getString("projectId", null));
-                 ASEDSTService.getEIDInClearByTheAir(result);
-                 }
-                 /**************************************************/
-                /**** Example to get data from advertising ***
-                 advData = ASResultParser.getDataFromAdvertising(result);
-                 try {
-                 Log.i(TAG, "FrameType = " +advData.getString("FrameType")+" AdvTxPower = "+advData.getString("AdvTxPower")+" EID = "+advData.getString("EID"));
-                 }catch (Exception ex){
-                 Log.i(TAG,"Error parsing JSON");
-                 }
-                 /*******************************************/
                 Log.i(TAG,result.getDevice().getName()+" - EID - "+logstr);
                 break;
             case ASUtils.TYPE_DEVICE_CONNECTABLE:

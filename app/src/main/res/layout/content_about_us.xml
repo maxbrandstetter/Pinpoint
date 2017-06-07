@@ -17,6 +17,6 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="Here's where I'd put a miscellaneous information about me and the project, if I knew what to say.  More to come."/>
+        android:text="Here's where I'd put a miscellaneous information about me and the project, if I knew what to say. More to come."/>
 
 </RelativeLayout>
