@@ -22,8 +22,7 @@
     <string name="activity_title_about_us">About Us</string>
     <string name="action_logout">Logout</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment!</string>
+    <string name="hello_blank_fragment">This is but a test!</string>
     <string name="title_activity_about_us">About Us</string>
     <string name="setup_1">Please select the 4 beacons you want to use.\n\nKeep track of the names of your beacons! You will be setting them up in a specific order later on.\n\nNote: Smaller RSSI values correspond to closer beacons.</string>
     <string name="setup_2">Starting at any wall, move clockwise around the room and place one beacon in the center of each wall, in the order you selected them.\n\nThen, stand at the corner between the 1st and 2nd beacon and press the button; move clockwise and do this for every corner.\n\nAfter pressing scan, wait for the loading icon to disappear for more accurate results.</string>

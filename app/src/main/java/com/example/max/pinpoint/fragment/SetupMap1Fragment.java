@@ -122,7 +122,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
      * @param param2 Parameter 2.
      * @return A new instance of fragment SetupMap1Fragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static SetupMap1Fragment newInstance(String param1, String param2) {
         SetupMap1Fragment fragment = new SetupMap1Fragment();
         return fragment;
@@ -190,7 +189,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
         Button goBack = (Button) rootView.findViewById(R.id.goBackButton);
         goBack.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
-                // TODO: Stop the scanner, throws null reference sometimes
                 // ASBleScanner.stopScan();
 
                 // Go back
@@ -222,7 +220,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
                 for (BeaconData beacon : activeBeacons) {
                     if (beacon.isSelected())
                     {
-                        // TODO: Fix bug; beacons store in scanned order not selected order
                         chosenBeacons.add(beacon);
                     }
                 }
@@ -249,7 +246,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
         return rootView;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -286,7 +282,6 @@ public class SetupMap1Fragment extends Fragment implements BackPressObserver, AS
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 

@@ -39,7 +39,6 @@ import static com.example.max.pinpoint.fragment.SetupMap1Fragment.MAX_WALLS;
  */
 public class MapFinishedFragment extends Fragment {
 
-    // TODO: Rename and change types of parameters
     private String mParam1;
     private String mParam2;
 
@@ -62,7 +61,6 @@ public class MapFinishedFragment extends Fragment {
      * @param param2 Parameter 2.
      * @return A new instance of fragment MapFinishedFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static MapFinishedFragment newInstance(String param1, String param2) {
         MapFinishedFragment fragment = new MapFinishedFragment();
         return fragment;
@@ -152,7 +150,6 @@ public class MapFinishedFragment extends Fragment {
         // Draw what you want on the canvas
         tempCanvas.drawRoundRect(new RectF(x1, y1, x2, y2), 2, 2, myRectPaint);
 
-        // TODO: Add beacon names to canvas?
         // Draw the beacons
         Paint beaconPaint = new Paint();
         beaconPaint.setColor(Color.parseColor("#26686D"));
@@ -193,7 +190,6 @@ public class MapFinishedFragment extends Fragment {
         return directory.getAbsolutePath();
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -230,7 +226,6 @@ public class MapFinishedFragment extends Fragment {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 }

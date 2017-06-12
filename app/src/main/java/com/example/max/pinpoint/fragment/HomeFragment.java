@@ -78,7 +78,6 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
      * @param param2 Parameter 2.
      * @return A new instance of fragment HomeFragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static HomeFragment newInstance(String param1, String param2) {
         HomeFragment fragment = new HomeFragment();
         return fragment;
@@ -167,7 +166,6 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
             currentBeacons.add(new ArrayList<>());
         }
 
-        // TODO: Show stop button when pressed, create stop button that stops scanning and shows start
         Button pinpoint = (Button) rootView.findViewById(R.id.pinpointme);
         pinpoint.setOnClickListener(new View.OnClickListener() {
             public void onClick(View v) {
@@ -332,7 +330,6 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
         return rootView;
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -485,7 +482,6 @@ public class HomeFragment extends Fragment implements ASScannerCallback {
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 }

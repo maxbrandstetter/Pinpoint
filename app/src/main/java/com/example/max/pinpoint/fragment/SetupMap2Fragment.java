@@ -44,7 +44,7 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
     private ArrayList<BeaconData> beacons = new ArrayList<BeaconData>();
     private ArrayList<ArrayList<BeaconData>> currentBeacons = new ArrayList<ArrayList<BeaconData>>();
     private int timesScanned = 0;
-    // TODO: Dynamically create variables based on number of walls
+
     private double wall0 = 0;
     private double wall1 = 0;
     private double wall2 = 0;
@@ -64,7 +64,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
      * @param param2 Parameter 2.
      * @return A new instance of fragment SetupMap2Fragment.
      */
-    // TODO: Rename and change types and number of parameters
     public static SetupMap2Fragment newInstance(String param1, String param2) {
         SetupMap2Fragment fragment = new SetupMap2Fragment();
         return fragment;
@@ -323,7 +322,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
         }
     }
 
-    // TODO: Rename method, update argument and hook method into UI event
     public void onButtonPressed(Uri uri) {
         if (mListener != null) {
             mListener.onFragmentInteraction(uri);
@@ -360,7 +358,6 @@ public class SetupMap2Fragment extends Fragment implements BackPressObserver, AS
      * >Communicating with Other Fragments</a> for more information.
      */
     public interface OnFragmentInteractionListener {
-        // TODO: Update argument type and name
         void onFragmentInteraction(Uri uri);
     }
 }
