@@ -30,35 +30,6 @@ public class DistanceCalculator {
     public double calculateDistance(double rssi)
     {
         /*
-         * For distance measurement, we know RSSI and txPower, so we just need to find distance
-         *
-         * We also know
-         * P = -10 * n * log(d) + A
-         *
-         * So given n = signal propagation constant, assumed 2 across empty space (all cases)
-         * d = distance
-         * A = txPower
-         * P = RSSI
-         *
-         * d = 10 ^ ((A - P) / (10 * n))
-         *
-         */
-        /*
-        double n = 2; // Signal propagation constant assumed 2 (across empty space) for all cases
-        double A = 0;
-        try {
-            A = advert.getDouble("AdvTxPower");
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
-        // P = RSSI
-        double P = beacon.getResult().getRssi();
-
-        double result = Math.pow(10, ((A - P) / (10 * n)));
-        return result;
-        */
-
-        /*
             We'll be using a power regression formula, or y = A * x^B + C in order to estimate
             distance.  This is based on known values of RSSI at certain distances, with 1m
             measurement being the basis, as it provides the most accuracy at distances less than
